@@ -9,10 +9,24 @@ def scrape_webpage(url):
     response = requests.get(url)
     soup = BeautifulSoup(response.text, "html.parser")
 
-    # Extract paragraphs and headers
-    texts = [tag.get_text() for tag in soup.find_all(["p", "h1", "h2", "h3", "code"])]
+    texts = []
     
+    # Extract paragraphs, headers, and code blocks
+    for tag in soup.find_all(["p", "h1", "h2", "h3", "code", "pre"]):
+        text = tag.get_text().strip()
+        
+        if text:
+            if tag.name in ["code", "pre"] and texts:
+                # Append to last paragraph instead of treating it separately
+                texts[-1] += f"\nCODE:\n{text}"
+            else:
+                texts.append(text)
+
+    with open("scraped.txt", "w", encoding="utf-8") as text_file:
+        text_file.write("\n".join(texts))
+         
     return texts  # Return as list of text chunks
+
 
 # Function to convert text into embeddings and store in FAISS index
 def create_faiss_index(text_chunks, model):
@@ -33,7 +47,7 @@ def search_docs(query, index, model, text_chunks, k=3):
 
 if __name__ == "__main__":
     # Define webpage URL
-    url = "https://docs.python.org/3/library/os.html"  # Example: Python os module docs
+    url = "https://requests.readthedocs.io/en/latest/user/quickstart/#make-a-request"  # Example: Python os module docs
 
     print(f"Scraping webpage: {url}")
     text_chunks = scrape_webpage(url)
@@ -46,11 +60,11 @@ if __name__ == "__main__":
     index, text_chunks = create_faiss_index(text_chunks, model)
 
     # Example query
-    query = "what is malloc?"
+    query = "how to read response content requests.get"
     print(f"\n🔎 Searching for: {query}")
 
     # Search for relevant sections
-    results = search_docs(query, index, model, text_chunks, k=3)
+    results = search_docs(query, index, model, text_chunks, k=5)
 
     # Display results
     print("\n📌 Most relevant sections:\n")
