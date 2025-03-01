@@ -46,7 +46,7 @@ if __name__ == "__main__":
     index, text_chunks = create_faiss_index(text_chunks, model)
 
     # Example query
-    query = "what is malloc?"
+    query = "how to setup env?"
     print(f"\n🔎 Searching for: {query}")
 
     # Search for relevant sections
