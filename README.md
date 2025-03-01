@@ -1,0 +1,1 @@
+# CLI Tool to Embed Local Models with APIs/Libraries you're using
