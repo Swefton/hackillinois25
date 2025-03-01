@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Hackillinois Chat UI with Ollama</title>
+  <style>
+    /* Reset and basic styling */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    /* Body: dark background with a local image (adjust the filename/path as needed) */
+    body {
+      background: #000 url('img.jpg') no-repeat center center fixed;
+      background-size: cover;
+      font-family: "Consolas", "Courier New", monospace;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      margin: 0;
+    }
+
+    /* Chat container with frosted glass effect */
+    .chat-container {
+      width: 90%;
+      max-width: 700px;
+      display: flex;
+      flex-direction: column;
+      border-radius: 12px;
+      background: rgba(0, 0, 0, 0.5);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+      overflow: hidden;
+      position: relative;
+      z-index: 1;
+    }
+
+    /* Header area */
+    .header {
+      padding: 16px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      text-align: center;
+      color: #ffffffcc;
+      font-weight: bold;
+      font-size: 1.1rem;
+      background: linear-gradient(to right, rgba(255,255,255,0.05), rgba(255,255,255,0.0));
+    }
+
+    /* Scrollable messages area */
+    .messages {
+      flex: 1;
+      padding: 16px;
+      overflow-y: auto;
+    }
+
+    /* Each message block */
+    .message-block {
+      margin-bottom: 1rem;
+      line-height: 1.4;
+    }
+
+    /* Assistant messages */
+    .assistant .message-author {
+      color: #ffaaff;
+      font-weight: bold;
+      margin-bottom: 2px;
+    }
+    .assistant .message-text {
+      color: #eaeaff;
+      padding-left: 8px;
+    }
+
+    /* User messages */
+    .user .message-author {
+      color: #66f9c2;
+      font-weight: bold;
+      margin-bottom: 2px;
+    }
+    .user .message-text {
+      color: #ddf;
+      padding-left: 8px;
+    }
+
+    /* Input area at bottom */
+    .input-area {
+      display: flex;
+      border-top: 1px solid rgba(255, 255, 255, 0.1);
+      padding: 8px;
+      background: linear-gradient(to right, rgba(255,255,255,0.05), rgba(255,255,255,0.0));
+    }
+
+    .input-area input[type="text"] {
+      flex: 1;
+      padding: 10px;
+      background: rgba(255, 255, 255, 0.07);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      color: #fff;
+      font-family: inherit;
+      font-size: 1rem;
+      border-radius: 8px;
+      outline: none;
+    }
+
+    .input-area input[type="text"]::placeholder {
+      color: #aaa;
+    }
+
+    .input-area button {
+      margin-left: 8px;
+      padding: 10px 16px;
+      background-color: #66f9c2;
+      color: #333;
+      border: none;
+      font-family: inherit;
+      font-size: 1rem;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background-color 0.2s ease;
+    }
+    .input-area button:hover {
+      background-color: #4dd1a3;
+    }
+  </style>
+</head>
+<body>
+  <div class="chat-container">
+    <div class="header">Hackillinois Chat</div>
+    <div class="messages" id="messages">
+      <div class="message-block assistant">
+        <div class="message-author">Assistant:</div>
+        <div class="message-text">Hello, how can I help you today?</div>
+      </div>
+    </div>
+    <div class="input-area">
+      <input type="text" id="chatInput" placeholder="Type your message here..." />
+      <button id="sendBtn">Send</button>
+    </div>
+  </div>
+
+  <script>
+    // Get references to DOM elements.
+    const messagesContainer = document.getElementById('messages');
+    const chatInput = document.getElementById('chatInput');
+    const sendBtn = document.getElementById('sendBtn');
+
+    // Append a message to the chat.
+    function addMessageBlock(author, text, isUser = false) {
+      const block = document.createElement('div');
+      block.classList.add('message-block', isUser ? 'user' : 'assistant');
+
+      const authorDiv = document.createElement('div');
+      authorDiv.classList.add('message-author');
+      authorDiv.textContent = author;
+
+      const textDiv = document.createElement('div');
+      textDiv.classList.add('message-text');
+      textDiv.textContent = text;
+
+      block.appendChild(authorDiv);
+      block.appendChild(textDiv);
+      messagesContainer.appendChild(block);
+      messagesContainer.scrollTop = messagesContainer.scrollHeight;
+    }
+
+    // Fetch a response from the local Ollama endpoint.
+    function fetchOllamaResponse(userMessage) {
+      // Ensure Ollama is running (e.g., via "ollama serve" on localhost:11434).
+      fetch('http://localhost:11434/ask', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ prompt: userMessage })
+      })
+      .then(response => {
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        return response.json();
+      })
+      .then(data => {
+        // Expecting a JSON response with a "response" property.
+        const assistantMessage = data.response || "No response received.";
+        addMessageBlock('Assistant:', assistantMessage);
+      })
+      .catch(error => {
+        console.error('Error from Ollama:', error);
+        addMessageBlock('Assistant:', "Sorry, there was an error generating a response.");
+      });
+    }
+
+    // Send message on button click or Enter key press.
+    sendBtn.addEventListener('click', () => {
+      const message = chatInput.value.trim();
+      if (message) {
+        addMessageBlock('User:', message, true);
+        chatInput.value = '';
+        // Send the user's message to Ollama.
+        fetchOllamaResponse(message);
+      }
+    });
+
+    chatInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        sendBtn.click();
+      }
+    });
+  </script>
+</body>
+</html>
