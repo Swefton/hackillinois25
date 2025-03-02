@@ -15,7 +15,7 @@ def get_valid_links(soup, base_url, visited):
         anchor_text = a_tag.get_text().strip().lower()
         href = a_tag["href"].strip()
         full_url = urljoin(base_url, href)
-        full_url, _ = urldefrag(full_url)  # Remove fragment identifiers
+        full_url, _ = urldefrag(full_url) 
         parsed_url = urlparse(full_url)
 
         # Only consider URLs in the same domain and not already visited.
@@ -30,6 +30,24 @@ def get_valid_links(soup, base_url, visited):
             if any(kw in path_lower for kw in INCLUSION_KEYWORDS) or any(kw in anchor_text for kw in INCLUSION_KEYWORDS):
                 print("Adding link:", full_url)
                 valid_links.add(full_url)
+                
+        if "github.com" in parsed_url.netloc:
+            # Extract the base repo URL (without branches, issues, etc.)
+            path_parts = parsed_url.path.strip("/").split("/")
+            if len(path_parts) >= 2:  # Ensure it's a repo URL (github.com/user/repo)
+                print(path_parts)
+                repo_base = f"https://github.com/{path_parts[0]}/{path_parts[1]}"
+
+                # # Construct wiki and readme URLs
+                # wiki_url = f"{repo_base}/wiki"
+                # readme_url = f"{repo_base}/blob/main/README.md"
+
+                # if wiki_url not in valid_links and readme_url not in valid_links:
+                #     # print("Adding GitHub wiki:", wiki_url)
+                #     # print("Adding GitHub README:", readme_url)
+
+                #     valid_links.add(wiki_url)
+                #     valid_links.add(readme_url)
     return valid_links
 
 def fetch_all_links(start_url, max_depth=3):
@@ -139,5 +157,5 @@ def scrape_full_documentation(start_url):
 
 # Example usage:
 if __name__ == "__main__":
-    start_url = "https://docs.pycord.dev/en/stable/api/index.html"
+    start_url = "https://serilog.net/"
     sections, tree = scrape_full_documentation(start_url)
