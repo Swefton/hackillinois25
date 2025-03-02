@@ -87,7 +87,6 @@ def scrape_webpage(url):
     # Simple content analysis: if the page doesn't have enough text, skip it.
     full_text = soup.get_text(separator=" ", strip=True)
     if len(full_text) < 200:
-        print(f"Skipping {url}: insufficient content.")
         return None
 
     sections = []  # List to hold structured documentation data
