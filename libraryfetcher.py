@@ -1,5 +1,67 @@
 import importlib.util
 import requests
+import re
+
+def extract_top_level_modules(import_line):
+    """
+    Parses Python import statements to figure out the
+    top-level package name(s). Examples:
+      - from sentence_transformers import SentenceTransformer
+      - from x.y.z import stuff
+      - import csv
+      - import os, re
+      - import bs4 as soup
+      - import foo.bar as baz
+      - from .some_local_module import example
+    Returns a list of root packages, e.g. ["sentence_transformers"], ["os", "re"], ["some_local_module"].
+    """
+    import_line = import_line.strip()
+
+    # Case: from <something> import ...
+    if import_line.startswith("from "):
+        # Example: "from sentence_transformers.something import SentenceTransformer"
+        match = re.match(r"^from\s+([a-zA-Z0-9_\.]+)\s+import\s+.*", import_line)
+        if match:
+            module_part = match.group(1)
+            # Strip leading dots in case of relative import: ".foo" -> "foo"
+            module_part = module_part.lstrip('.')
+            # e.g. "sentence_transformers.something" -> "sentence_transformers"
+            root_name = module_part.split('.')[0]
+            return [root_name]
+        return []
+
+    # Case: import <library>, <library2>
+    if import_line.startswith("import "):
+        # Everything after "import "
+        rest = import_line[7:].strip()
+        # Could be "bs4 as soup, os, re"
+        # so split by commas first
+        chunks = [c.strip() for c in rest.split(',')]
+        root_list = []
+        for chunk in chunks:
+            # chunk could be "bs4 as soup" or "x.y.z as alias"
+            # we only want the base name "bs4" or "x"
+            first_token = chunk.split()[0]     # e.g. "bs4", "x.y.z"
+            first_token = first_token.lstrip('.')  # remove leading dots if any
+            root_list.append(first_token.split('.')[0])
+        return root_list
+
+    return []
+
+
+# ------------------------------------
+# 2) Simple “library name → doc link” 
+#    logic (Python-only example).
+# ------------------------------------
+STANDARD_LIBRARY = {
+    # Add whichever stdlib modules you want recognized
+    "os", "json", "re", "csv", "xml", "sys", "math", "time"
+}
+
+ALIASES = {
+    # Modules whose PyPI name differs from the import name
+    "bs4": "beautifulsoup4",
+}
 
 # =============================
 # Python Ecosystem Functions
@@ -12,71 +74,39 @@ def get_builtin_doc_url(library_name):
     return f"https://docs.python.org/3/library/{library_name}.html"
 
 def get_pypi_doc_url(library_name):
-    """
-    Tries to find a "Documentation" or "Docs" URL on PyPI.
-    Falls back to docs_url, homepage, or home_page if a direct docs link is absent.
-    """
     url = f"https://pypi.org/pypi/{library_name}/json"
     response = requests.get(url)
     if response.status_code == 200:
         info = response.json().get('info', {})
-        urls = info.get('project_urls') or {}
-        # 1) Check for documentation keys explicitly
+        # Try 'Documentation', 'Docs', etc., then docs_url, then homepage
+        project_urls = info.get('project_urls') or {}
         for key in ['Documentation', 'Docs', 'documentation']:
-            if key in urls and urls[key]:
-                return urls[key]
-        # 2) Check docs_url field
-        docs_url = info.get('docs_url')
-        if docs_url:
-            return docs_url
-        # 3) Check 'Home' or homepage fields
-        if 'Home' in urls and urls['Home']:
-            return urls['Home']
+            if key in project_urls and project_urls[key]:
+                return project_urls[key]
+        if info.get('docs_url'):
+            return info.get('docs_url')
+        if 'Home' in project_urls and project_urls['Home']:
+            return project_urls['Home']
         return info.get('home_page')
     return None
 
-# 1) A set of known standard library modules that appear on docs.python.org
-#    but won't show up as "built-in" in importlib for historical reasons.
-#    This list can be expanded as needed.
-STANDARD_LIBRARY = {
-    "os", "re", "json", "csv", "xml", "bs4", "sys", "math", "time", 
-    "enum", "typing", "functools", "itertools", "logging"
-}
-
-# 2) A mapping for modules whose PyPI project name differs from import name.
-#    For example, "bs4" is installed as "beautifulsoup4". If the user asks for
-#    "bs4", we should search PyPI under "beautifulsoup4".
-PYPI_ALIASES = {
-    "bs4": "beautifulsoup4"
-}
-
 def get_python_doc_url(library_name):
-    """
-    Returns a documentation URL for a Python library, attempting:
-      1. A built-in check (C-level, e.g. sys/time).
-      2. A known standard library fallback (like 'os', 're', etc.).
-      3. Known PyPI aliases (e.g. bs4 → beautifulsoup4).
-      4. A normal PyPI lookup (project_urls).
-    """
-    # 1) If it’s truly built-in, return the official docs link
+    # If it's truly built-in (like 'sys', 'time')
     if is_builtin(library_name):
         return get_builtin_doc_url(library_name)
 
-    # 2) If it’s in the known standard library set, return the official docs link.
-    #    Even though these might not have origin == 'built-in', they are part of stdlib.
+    # If it's in our standard library set
     if library_name in STANDARD_LIBRARY:
         return f"https://docs.python.org/3/library/{library_name}.html"
 
-    # 3) If the library has a known PyPI alias, swap it out
-    #    before we do the PyPI check. E.g. "bs4" → "beautifulsoup4".
-    pypi_name = PYPI_ALIASES.get(library_name, library_name)
+    # If there's a known alias (bs4 -> beautifulsoup4)
+    library_name = ALIASES.get(library_name, library_name)
 
-    # 4) Attempt PyPI metadata look-up
-    doc_url = get_pypi_doc_url(pypi_name)
+    # Check PyPI metadata
+    doc_url = get_pypi_doc_url(library_name)
     if doc_url:
         return doc_url
 
-    # If we still haven't found anything, return None
     return None
 
 # =============================
