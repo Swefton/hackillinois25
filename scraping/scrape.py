@@ -4,6 +4,7 @@ from bs4 import BeautifulSoup
 import json
 from urllib.parse import urljoin, urlparse, urldefrag
 from collections import deque, defaultdict
+from tqdm import tqdm
 
 # Strategy 1: Heuristic-Based Filtering: inclusion and exclusion keywords.
 INCLUSION_KEYWORDS = ['doc', 'guide', 'api', 'reference', 'tutorial']
@@ -29,11 +30,10 @@ def get_valid_links(soup, base_url, visited):
 
             # Only add if the URL path or anchor text contains an inclusion keyword.
             if any(kw in path_lower for kw in INCLUSION_KEYWORDS) or any(kw in anchor_text for kw in INCLUSION_KEYWORDS):
-                print("Adding link:", full_url)
                 valid_links.add(full_url)
     return valid_links
 
-def fetch_all_links(start_url, max_depth=3):
+def fetch_all_links(start_url, name, max_depth=3):
     """
     Crawl documentation pages starting at start_url.
     Build a tree view of the pages and return both the set of URLs and the tree.
@@ -42,6 +42,8 @@ def fetch_all_links(start_url, max_depth=3):
     tree = defaultdict(list)  # key: parent URL, value: list of child URLs
     queue = deque([(start_url, None, 0)])  # (current URL, parent URL, current depth)
     all_links = set([start_url])
+    
+    print(f"Indexing {name}")
     
     while queue:
         url, parent, depth = queue.popleft()
@@ -112,40 +114,48 @@ def scrape_webpage(url):
     return sections
 
 def scrape_full_documentation(start_url, library_name, directory):
-    """Crawl all relevant documentation pages, build a tree view, and save structured data."""
-    all_links, tree = fetch_all_links(start_url)
+    """Crawl all relevant documentation pages, build a tree view, and cache structured data inside .alexandria."""
+    
+    # Ensure the .alexandria folder exists
+    alexandria_path = os.path.join(directory, ".alexandria")
+    if not os.path.exists(alexandria_path):
+        print(f"❌ Error: The .alexandria directory is missing in {directory}. Run 'alexandria init' first.")
+        return None, None
+    
+    # Define the vectordb folder inside .alexandria
+    vectordb_path = os.path.join(alexandria_path, "vectordb", library_name)
+    
+    # Ensure the library-specific cache directory exists
+    os.makedirs(vectordb_path, exist_ok=True)
+
+    # Fetch links and scrape documentation
+    all_links, tree = fetch_all_links(start_url, library_name)
     print(f"Total unique documentation pages found: {len(all_links)}")
 
     all_sections = []
     
-    for index, url in enumerate(all_links):
-        print(f"🔎 Scraping [{index+1}/{len(all_links)}]: {url}")
+    for index, url in enumerate(tqdm(all_links, desc="🔎 Scraping Progress", unit="page")):
         try:
             sections = scrape_webpage(url)
             if sections:
                 all_sections.extend(sections)
         except Exception as e:
-            pass 
+            print(f"\n❌ Failed to scrape {url}: {e}")
     
-    # Define the target folder where JSON files will be stored
-    target_folder = os.path.join(directory, library_name)
-    
-    # Ensure the directory exists
-    os.makedirs(target_folder, exist_ok=True)
-
-    # Save structured documentation data
-    structured_docs_path = os.path.join(target_folder, "structured_docs.json")
+    # Save structured documentation data inside .alexandria/vectordb/
+    structured_docs_path = os.path.join(vectordb_path, "structured_docs.json")
     with open(structured_docs_path, "w", encoding="utf-8") as file:
         json.dump(all_sections, file, indent=4, ensure_ascii=False)
     
-    # Save the tree view for later analysis or visualization
-    doc_tree_path = os.path.join(target_folder, "doc_tree.json")
+    # Save the tree view
+    doc_tree_path = os.path.join(vectordb_path, "doc_tree.json")
     with open(doc_tree_path, "w", encoding="utf-8") as file:
         json.dump(tree, file, indent=4, ensure_ascii=False)
     
-    print(f"✅ Scraping complete! Data saved to:\n  📁 {structured_docs_path}\n  📁 {doc_tree_path}")
+    print(f"✅ Scraping complete!") 
     
     return all_sections, tree
+
 
 # Example usage:
 if __name__ == "__main__":
