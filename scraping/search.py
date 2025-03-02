@@ -44,6 +44,7 @@ def search_docs(query, k=3):
 
     for rank, best_section in enumerate(best_sections, 1):
         print(f"\n🏆 Rank {rank} | 📌 Section: {best_section['title']}")
+        print(f"🔗 Link: {best_section['url']}")
 
         # Step 2: BM25 Search **ONLY Within This Section**
         section_paragraphs = best_section["content"]
@@ -71,4 +72,4 @@ def search_docs(query, k=3):
 
 
 # Example Queries
-search_docs("read content server response", k=3)
+search_docs("intents needed", k=3)

@@ -1,0 +1,31 @@
+{
+    "https://docs.pycord.dev/en/stable/api/index.html": [
+        "https://docs.pycord.dev/en/stable/api/voice.html",
+        "https://docs.pycord.dev/en/stable/api/ui_kit.html",
+        "https://docs.pycord.dev/en/stable/api/sinks.html",
+        "https://docs.pycord.dev/en/stable/api/data_classes.html",
+        "https://docs.pycord.dev/en/stable/ext/bridge/api.html",
+        "https://docs.pycord.dev/en/stable/api/clients.html",
+        "https://docs.pycord.dev/en/stable/api/events.html",
+        "https://docs.pycord.dev/en/stable/api/application_commands.html",
+        "https://docs.pycord.dev/en/stable/api/webhooks.html",
+        "https://docs.pycord.dev/en/stable/api/async_iter.html",
+        "https://docs.pycord.dev/en/stable/api/enums.html",
+        "https://docs.pycord.dev/en/stable/api/audit_logs.html",
+        "https://docs.pycord.dev/en/stable/api/utils.html",
+        "https://docs.pycord.dev/en/stable/api/abcs.html",
+        "https://docs.pycord.dev/en/stable/api/models.html",
+        "https://docs.pycord.dev/en/stable/ext/commands/api.html",
+        "https://docs.pycord.dev/en/stable/api/version_info.html",
+        "https://docs.pycord.dev/en/stable/api/exceptions.html",
+        "https://docs.pycord.dev/en/stable/api/cogs.html",
+        "https://docs.pycord.dev/en/stable/api/application_info.html",
+        "https://docs.pycord.dev/en/stable/index.html"
+    ],
+    "https://docs.pycord.dev/en/stable/api/data_classes.html": [
+        "https://docs.pycord.dev/en/stable/intents.html"
+    ],
+    "https://docs.pycord.dev/en/stable/ext/commands/api.html": [
+        "https://docs.pycord.dev/en/stable/ext/commands/commands.html"
+    ]
+}
