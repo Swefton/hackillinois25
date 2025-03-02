@@ -1,5 +1,24 @@
 import importlib.util
 import requests
+from bs4 import BeautifulSoup  # pip install beautifulsoup4
+from rapidfuzz import process, fuzz  # pip install rapidfuzz
+
+# =============================
+# Utility: Get a Candidate Pool from Popular Packages
+# =============================
+def get_candidate_pool():
+    # Download a list of top PyPI packages from Hugovk’s Top PyPI Packages (30-day list)
+    url = "https://hugovk.github.io/top-pypi-packages/top-pypi-packages-30-days.min.json"
+    try:
+        response = requests.get(url)
+        response.raise_for_status()
+        data = response.json()
+        # "rows" is a list of dictionaries with a "project" key.
+        candidate_packages = [row['project'] for row in data.get('rows', [])]
+        return candidate_packages
+    except Exception as e:
+        print("Error retrieving candidate pool:", e)
+        return []
 
 # =============================
 # Python Ecosystem Functions
@@ -11,166 +30,78 @@ def is_builtin(library_name):
 def get_builtin_doc_url(library_name):
     return f"https://docs.python.org/3/library/{library_name}.html"
 
-def is_standard_library(library_name):
-    spec = importlib.util.find_spec(library_name)
-    if spec is None:
-        return False
-    if spec.origin == 'built-in':
-        return True
-    if spec.origin and 'site-packages' not in spec.origin:
-        return True
-    return False
-
-def get_stdlib_doc_url(library_name):
-    if is_standard_library(library_name):
-        return f"https://docs.python.org/3/library/{library_name}.html"
-    return None
-
 def get_pypi_doc_url(library_name):
     url = f"https://pypi.org/pypi/{library_name}/json"
     response = requests.get(url)
     if response.status_code == 200:
         info = response.json().get('info', {})
         urls = info.get('project_urls') or {}
-        # Check common documentation keys
-        for key in ['Documentation', 'Docs', 'documentation']:
-            if key in urls and urls[key]:
-                return urls[key]
-        docs_url = info.get('docs_url')
-        if docs_url:
-            return docs_url
-        if 'Home' in urls and urls['Home']:
-            return urls['Home']
+        # Look through keys (case-insensitively) for documentation info.
+        for key, value in urls.items():
+            if key.lower() in ['documentation', 'docs'] and value:
+                return value
+        if info.get('docs_url'):
+            return info.get('docs_url')
         if info.get('home_page'):
-            return info['home_page']
-        # Fallback to the PyPI project page if nothing else was found
-        return f"https://pypi.org/project/{library_name}"
+            return info.get('home_page')
     return None
 
 def get_python_doc_url(library_name):
     if is_builtin(library_name):
         return get_builtin_doc_url(library_name)
-    if is_standard_library(library_name):
-        return get_stdlib_doc_url(library_name)
     else:
-        doc_url = get_pypi_doc_url(library_name)
-        return doc_url if doc_url else None
+        return get_pypi_doc_url(library_name)
 
-# =============================
-# Node.js (npm) Ecosystem Functions
-# =============================
-def get_npm_doc_url(library_name):
-    url = f"https://registry.npmjs.org/{library_name}"
-    response = requests.get(url)
-    if response.status_code == 200:
-        info = response.json()
-        latest = info.get('dist-tags', {}).get('latest')
-        if latest:
-            version_info = info.get('versions', {}).get(latest, {})
-            doc_url = version_info.get('homepage')
-            if doc_url:
-                return doc_url
-            repo = version_info.get('repository', {})
-            if isinstance(repo, dict) and repo.get('url'):
-                return repo.get('url')
-        if info.get('homepage'):
-            return info.get('homepage')
-    return None
+# Use BeautifulSoup to scrape PyPI search results for package names.
+def scrape_pypi_search(user_input):
+    search_url = f"https://pypi.org/search/?q={user_input}"
+    response = requests.get(search_url)
+    if response.status_code != 200:
+        return []
+    soup = BeautifulSoup(response.text, 'html.parser')
+    results = soup.find_all('a', class_='package-snippet')
+    package_names = []
+    for result in results:
+        name_tag = result.find('span', class_='package-snippet__name')
+        if name_tag:
+            package_names.append(name_tag.text.strip())
+    return package_names
 
-# =============================
-# Ruby (RubyGems) Ecosystem Functions
-# =============================
-def get_rubygems_doc_url(gem_name):
-    url = f"https://rubygems.org/api/v1/gems/{gem_name}.json"
-    response = requests.get(url)
-    if response.status_code == 200:
-        info = response.json()
-        if info.get('documentation_uri'):
-            return info['documentation_uri']
-        elif info.get('homepage_uri'):
-            return info['homepage_uri']
-    return None
+# Combine candidate pool from popular packages and scraped packages,
+# then use multiple fuzzy scorers with a dynamic cutoff.
+def search_best_pypi_match(user_input):
+    # Use a lower cutoff for very short inputs.
+    cutoff = 20 if len(user_input) < 5 else 40
 
-# =============================
-# PHP (Packagist) Ecosystem Functions
-# =============================
-def get_packagist_doc_url(package_name):
-    url = f"https://repo.packagist.org/p/{package_name}.json"
-    response = requests.get(url)
-    if response.status_code == 200:
-        data = response.json()
-        packages = data.get('packages', {}).get(package_name, {})
-        if packages:
-            versions = sorted(packages.keys(), reverse=True)
-            for version in versions:
-                info = packages[version]
-                if 'homepage' in info and info['homepage']:
-                    return info['homepage']
-                elif 'repository' in info and info['repository']:
-                    return info['repository']
-    return None
+    candidate_pool = get_candidate_pool()
+    scraped_candidates = scrape_pypi_search(user_input)
+    # Combine and remove duplicates.
+    candidates = list(set(candidate_pool + scraped_candidates))
+    if not candidates:
+        return None
 
-# =============================
-# Java (Maven Central) Ecosystem Functions
-# =============================
-def get_maven_doc_url(library_name):
-    try:
-        groupId, artifactId = library_name.split(':')
-    except Exception:
-        return "Invalid format for Maven library. Use 'groupId:artifactId'."
-    url = f"https://search.maven.org/solrsearch/select?q=g:\"{groupId}\"+AND+a:\"{artifactId}\"&rows=1&wt=json"
-    response = requests.get(url)
-    if response.status_code == 200:
-        data = response.json()
-        docs = data.get('response', {}).get('docs', [])
-        if docs:
-            if 'homepage' in docs[0] and docs[0]['homepage']:
-                return docs[0]['homepage']
-            else:
-                return f"https://search.maven.org/artifact/{groupId}/{artifactId}"
-    return None
+    # Try a simple substring match first.
+    for pkg in candidates:
+        if user_input.lower() in pkg.lower():
+            return pkg
 
-# =============================
-# .NET (NuGet) Ecosystem Functions
-# =============================
-def get_nuget_doc_url(library_name):
-    url = f"https://api.nuget.org/v3/registration5-semver1/{library_name.lower()}/index.json"
-    response = requests.get(url)
-    if response.status_code == 200:
-        data = response.json()
-        items = data.get('items', [])
-        if items:
-            first_item = items[0]
-            sub_items = first_item.get('items', [])
-            if sub_items:
-                catalog_entry = sub_items[0].get('catalogEntry', {})
-                project_url = catalog_entry.get('projectUrl')
-                if project_url:
-                    return project_url
-    return None
-
-# =============================
-# Go Ecosystem Functions
-# =============================
-def get_go_doc_url(library_name):
-    return f"https://pkg.go.dev/{library_name}"
-
-# =============================
-# Rust (crates.io) Ecosystem Functions
-# =============================
-def get_rust_doc_url(library_name):
-    url = f"https://crates.io/api/v1/crates/{library_name}"
-    response = requests.get(url)
-    if response.status_code == 200:
-        data = response.json()
-        crate = data.get('crate', {})
-        if crate.get('documentation'):
-            return crate['documentation']
-        elif crate.get('homepage'):
-            return crate['homepage']
-        elif crate.get('repository'):
-            return crate['repository']
-    return None
+    # Try several scorers.
+    scorers = [fuzz.partial_ratio, fuzz.token_set_ratio, fuzz.ratio]
+    best_match = None
+    best_score = 0
+    for scorer in scorers:
+        result = process.extractOne(
+            user_input,
+            candidates,
+            scorer=scorer,
+            score_cutoff=cutoff
+        )
+        if result:
+            match, score, _ = result
+            if score > best_score:
+                best_score = score
+                best_match = match
+    return best_match
 
 # =============================
 # Main Program
@@ -179,26 +110,36 @@ def main():
     print("Supported ecosystems: python, node, ruby, php, maven, nuget, go, rust")
     ecosystem = input("Enter ecosystem: ").strip().lower()
     library_name = input("Enter the library name (or coordinates for maven, e.g. groupId:artifactId): ").strip()
-
-    doc_url = None
+    
     if ecosystem == 'python':
+        # Minimal fallback mapping for ambiguous short inputs.
+        fallback_map = {
+            "opencv": "opencv-python",
+            "opencv-python": "opencv-python",
+            "pd": "pandas",
+            "bs4": "beautifulsoup"
+        }
+        # Check if the user input is in our fallback map.
+        if library_name.lower() in fallback_map:
+            print(f"Falling back to known package name for '{library_name}'.")
+            library_name = fallback_map[library_name.lower()]
+        
+        # First, try using the (possibly remapped) name directly.
         doc_url = get_python_doc_url(library_name)
-    elif ecosystem == 'node':
-        doc_url = get_npm_doc_url(library_name)
-    elif ecosystem == 'ruby':
-        doc_url = get_rubygems_doc_url(library_name)
-    elif ecosystem == 'php':
-        doc_url = get_packagist_doc_url(library_name)
-    elif ecosystem == 'maven':
-        doc_url = get_maven_doc_url(library_name)
-    elif ecosystem == 'nuget':
-        doc_url = get_nuget_doc_url(library_name)
-    elif ecosystem == 'go':
-        doc_url = get_go_doc_url(library_name)
-    elif ecosystem == 'rust':
-        doc_url = get_rust_doc_url(library_name)
+        if not doc_url:
+            print(f"No documentation found for '{library_name}'. Attempting to find a close match...")
+            best_match = search_best_pypi_match(library_name)
+            if best_match and best_match.lower() != library_name.lower():
+                print(f"Did you mean '{best_match}'?")
+                library_name = best_match
+                doc_url = get_python_doc_url(library_name)
+        
+        # Minimal fallback for known exceptions (e.g., opencv fallback already handled in fallback_map).
+        if not doc_url and library_name.lower() in fallback_map:
+            library_name = fallback_map[library_name.lower()]
+            doc_url = get_python_doc_url(library_name)
     else:
-        print("Ecosystem not supported.")
+        print("Ecosystem not supported in this example.")
         return
 
     if doc_url:
