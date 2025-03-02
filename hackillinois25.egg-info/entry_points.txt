@@ -1,0 +1,2 @@
+[console_scripts]
+hackillinois25 = hackillinois25.cli:cli
