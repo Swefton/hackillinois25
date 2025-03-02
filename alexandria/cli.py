@@ -1,3 +1,4 @@
+import os
 import click
 from textual.app import App, ComposeResult
 from textual.containers import Vertical, Horizontal
@@ -8,8 +9,24 @@ from scraping.test_model_query import get_ai_response
 
 @click.group()
 def cli():
-    """Hackillinois CLI"""
+    """Alexandria CLI"""
     pass
+
+
+@cli.command()
+@click.argument("directory", required=False)
+def init(directory=None):
+    """Initialize Alexandria by creating a .alexandria folder for caching data."""
+    
+    # Use the provided directory or default to the current working directory
+    target_dir = os.path.abspath(directory) if directory else os.getcwd()
+    alexandria_path = os.path.join(target_dir, ".alexandria")
+
+    try:
+        os.makedirs(alexandria_path, exist_ok=True)
+        click.echo(f"✅ Alexandria initialized at: {alexandria_path}")
+    except Exception as e:
+        click.echo(f"❌ Error initializing Alexandria: {e}")
 
 
 @cli.command()
@@ -28,7 +45,7 @@ class Alexandria(App):
     user_message_count = var(0)
 
     def compose(self) -> ComposeResult:
-        yield Header(name="HackIllinois Chat", show_clock=False)
+        yield Header(name="Alexandria Chat", show_clock=False)
         with Vertical(id="chat-container"):
             self.chat_log = Log(highlight=True)
             yield self.chat_log
