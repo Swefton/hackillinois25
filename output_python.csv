@@ -8,4 +8,6 @@ os,Documentation not found for 'os'.
 re,Documentation not found for 're'.
 requests,https://requests.readthedocs.io
 sentence_transformers,Documentation not found for 'sentence_transformers'.
+sys,https://docs.python.org/3/library/sys.html
 webbrowser,Documentation not found for 'webbrowser'.
+xml,Documentation not found for 'xml'.

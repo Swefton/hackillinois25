@@ -1,0 +1,10 @@
+Newtonsoft.Json,https://www.newtonsoft.com/json
+EntityFramework,https://docs.microsoft.com/en-us/ef/
+xunit,https://xunit.net/
+Moq,https://github.com/moq/moq4
+NLog,https://nlog-project.org/
+AutoMapper,https://automapper.org/
+Hangfire,https://www.hangfire.io/
+Serilog,https://serilog.net/
+Dapper,https://dapper-tutorial.net/dapper
+IdentityServer4,https://identityserver4.readthedocs.io/en/latest/
