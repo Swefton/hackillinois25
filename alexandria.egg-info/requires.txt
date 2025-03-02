@@ -1,6 +1,8 @@
 click
 textual
 requests
+prompt_toolkit
+rich
 sentence-transformers
 rank-bm25
 faiss-cpu

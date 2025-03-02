@@ -9,6 +9,10 @@
             "doc_link": "Documentation not found for 'pycord'."
         },
         {
+            "library": "sentence_transformers",
+            "doc_link": "Documentation not found for 'sentence_transformers'."
+        },
+        {
             "library": "spotipy",
             "doc_link": "https://spotipy.readthedocs.org/"
         }

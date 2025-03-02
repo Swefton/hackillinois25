@@ -1,28 +1,14 @@
-#!/usr/bin/env python3
-
 import os
 import json
 import click
-import requests
-from rich import print as rprint
-from rich.panel import Panel
-from rich import box
 from libfetch.combined_libs import parse_workspace_for_libraries  # Library detection
 from scraping.scrape import scrape_full_documentation  # Scraping function
-from scraping.test_model_query import get_ai_response  # AI response function
-
-# For colored input
-from prompt_toolkit import PromptSession
-from prompt_toolkit.styles import Style
-
-# Style so that typed text is blue
-session_style = Style.from_dict({'': 'ansiblue'})
-session = PromptSession(style=session_style)
+from clifrontend.clifront import chat as clifront_chat  # Import the new chat command
 
 
 @click.group()
 def cli():
-    """Alexandria CLI: Scan, Scrape, and Chat"""
+    """Alexandria CLI"""
     pass
 
 
@@ -90,56 +76,10 @@ def scan(directory=None):
 @cli.command()
 @click.argument("directory", required=False, type=click.Path(exists=False))
 def chat(directory=None):
-    """Launch the Alexandria chat interface with contextual knowledge from a given directory."""
-    
+    """Launches the Alexandria chat interface from clifrontend with an optional directory."""
     target_dir = os.path.abspath(directory) if directory else os.getcwd()
-    alexandria_path = os.path.join(target_dir, ".alexandria")
-
-    # Ensure the .alexandria directory exists
-    if not os.path.exists(alexandria_path):
-        rprint(Panel(f"❌ Error: No .alexandria directory found in {target_dir}. Run 'alexandria init' first.", border_style="red", box=box.ROUNDED))
-        return
-
-    rprint(
-        Panel(
-            f"Welcome to Alexandria Chat\n[green]Using knowledge from: {alexandria_path}[/green]",
-            title="Alexandria",
-            border_style="green",
-            box=box.ROUNDED
-        )
-    )
-
-    while True:
-        try:
-            # Prompt user for input
-            user_input = session.prompt(">> ")
-
-            if user_input.lower() in ("exit", "quit"):
-                rprint(Panel("Exiting chat...", border_style="red", box=box.ROUNDED))
-                break
-
-            # Display user input
-            rprint(Panel(f"[bold blue]User:[/bold blue] {user_input}", border_style="blue", box=box.ROUNDED))
-
-            # Fetch AI response with context
-            response = fetch_ollama_response(user_input, alexandria_path)
-            rprint(Panel(f"[bold magenta]Assistant:[/bold magenta] {response}", border_style="magenta", box=box.ROUNDED))
-
-        except KeyboardInterrupt:
-            rprint(Panel("Exiting chat...", border_style="red", box=box.ROUNDED))
-            break
-
-
-def fetch_ollama_response(user_message: str, directory: str) -> str:
-    """
-    Uses Alexandria's LLM response function to generate a reply based on stored documentation.
-    """
-    try:
-        response = get_ai_response(user_message, directory)  # ✅ Passes directory correctly
-        return response
-    except Exception as e:
-        return f"Error calling Alexandria LLM: {str(e)}"
-
+    print()
+    clifront_chat("./tests/workspace")  # ✅ Pass the directory correctly 
 
 def main():
     cli()

@@ -1,3 +1,4 @@
 alexandria
+clifrontend
 libfetch
 scraping

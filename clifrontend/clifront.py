@@ -3,10 +3,10 @@
 import os
 import click
 import requests
-
 from rich import print as rprint
 from rich.panel import Panel
 from rich import box
+from scraping.test_model_query import get_ai_response 
 
 # For colored input
 from prompt_toolkit import PromptSession
@@ -18,7 +18,6 @@ session_style = Style.from_dict({
 })
 session = PromptSession(style=session_style)
 
-
 @click.group()
 def cli():
     """
@@ -29,44 +28,48 @@ def cli():
     pass
 
 @cli.command()
-def activate():
-    """Scrape files in a given directory."""
-    click.echo("Welcome! Please give path to project (ex: desktop/p1)")
-    project_path = input(">> ").strip()
-
-    if not os.path.isdir(project_path):
-        click.echo(f"Error: '{project_path}' is not a valid directory.")
+@click.argument("directory", required=False)
+def activate(directory=None):
+    """
+    Prompts for a directory path and scrapes all files in that directory.
+    """
+    target_dir = os.path.abspath(directory) if directory else os.getcwd()
+    
+    if not os.path.isdir(target_dir):
+        click.echo(f"❌ Error: '{target_dir}' is not a valid directory.")
         return
 
     collected_files = []
-    for root, dirs, files in os.walk(project_path):
+    for root, dirs, files in os.walk(target_dir):
         for file in files:
             file_path = os.path.join(root, file)
             collected_files.append(file_path)
 
     if collected_files:
-        click.echo("Scraping complete. Files collected:")
+        click.echo("✅ Scraping complete. Files collected:")
         for f in collected_files:
             click.echo(f)
     else:
-        click.echo("No files found in that directory.")
+        click.echo("⚠️ No files found in that directory.")
 
 @cli.command()
-def chat():
-    """Launch Alexandria – Your CLI Companion."""
-    Alexandria().run()
-
-# ─────────────────────────────────────────────────────────────────────────────
-# A simple spinning circle widget
-# ─────────────────────────────────────────────────────────────────────────────
-
-class SpinningCircle(Static):
+@click.argument("directory", required=False)
+def chat(directory=None):
     """
-    Launch a barebone chat interface.
+    Launch the Alexandria chat interface with contextual knowledge from a given directory.
     """
+    print(directory)
+    target_dir = os.path.abspath(directory) if directory else os.getcwd()
+    alexandria_path = os.path.join(target_dir, ".alexandria")
+
+    # Ensure the .alexandria directory exists before proceeding
+    if not os.path.exists(alexandria_path):
+        rprint(Panel(f"❌ Error: No .alexandria directory found in {target_dir}. Run 'alexandria init' first.", border_style="red", box=box.ROUNDED))
+        return
+
     rprint(
         Panel(
-            "Welcome to Alexandria Chat",
+            f"Welcome to Alexandria Chat\n[green]Using knowledge from: {alexandria_path}[/green]",
             title="Alexandria",
             border_style="green",
             box=box.ROUNDED
@@ -95,8 +98,8 @@ class SpinningCircle(Static):
                 )
             )
 
-            # Fetch assistant response
-            response = fetch_ollama_response(user_input)
+            # Fetch assistant response with context
+            response = fetch_ollama_response(user_input, alexandria_path)
             rprint(
                 Panel(
                     f"[bold magenta]Assistant:[/bold magenta] {response}",
@@ -109,22 +112,15 @@ class SpinningCircle(Static):
             rprint(Panel("Exiting chat...", border_style="red", box=box.ROUNDED))
             break
 
-def fetch_ollama_response(user_message: str) -> str:
+def fetch_ollama_response(user_message: str, directory: str) -> str:
     """
-    Example function to get a response from Ollama.
-    Adjust for your actual endpoint/model as needed.
+    Uses Alexandria's LLM response function to generate a reply based on stored documentation.
     """
     try:
-        resp = requests.post(
-            "http://localhost:11434/api/generate",
-            json={"model": "llama3.2", "prompt": user_message, "stream": False}
-        )
-        if resp.status_code != 200:
-            return f"Error: Received status code {resp.status_code}"
-        data = resp.json()
-        return data.get("response", "No response key found in JSON.")
+        response = get_ai_response(user_message, directory)  # Uses the correct function
+        return response
     except Exception as e:
-        return f"Error calling Ollama: {str(e)}"
+        return f"Error calling Alexandria LLM: {str(e)}"
 
 def main():
     cli()
