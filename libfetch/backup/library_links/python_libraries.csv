@@ -1,0 +1,15 @@
+requests,https://requests.readthedocs.io
+faiss,https://github.com/facebookresearch/faiss
+re,https://docs.python.org/3/library/re.html
+xml,https://docs.python.org/3/library/xml.html
+os,https://docs.python.org/3/library/os.html
+find_libs,https://docs.python.org/3/library/find_libs.html
+json,https://docs.python.org/3/library/json.html
+libraryfetcher,https://docs.python.org/3/library/libraryfetcher.html
+sys,https://docs.python.org/3/library/sys.html
+math,https://docs.python.org/3/library/math.html
+importlib,https://docs.python.org/3/library/importlib.html
+sentence_transformers,https://pypi.org/project/sentence_transformers
+beautifulsoup,http://www.crummy.com/software/BeautifulSoup/
+csv,https://docs.python.org/3/library/csv.html
+numpy,https://numpy.org/doc/
