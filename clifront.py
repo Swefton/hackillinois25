@@ -5,7 +5,7 @@ import click
 import requests
 from textual.app import App, ComposeResult
 from textual.containers import Vertical, Horizontal
-from textual.widgets import Header, Footer, TextLog, Input, Button
+from textual.widgets import Header, Footer, Log, Input, Button
 from textual.reactive import var
 
 @click.group()
@@ -110,7 +110,7 @@ class ChatApp(App):
     /* ------------------------------------------------------------------------
        Scrollable area for messages
        ------------------------------------------------------------------------ */
-    TextLog {
+    Log {
         background: $log-bg;
         width: 100%;
         height: 1fr;
@@ -162,10 +162,10 @@ class ChatApp(App):
     user_message_count = var(0)
 
     def compose(self) -> ComposeResult:
-        yield Header(name="ChatApp", show_clock=False)
+        yield Header(name="HackIllinois name", show_clock=False)
         with Vertical(id="chat-container"):
             # Enable bracket markup by setting highlight=True
-            self.chat_log = TextLog(highlight=True)
+            self.chat_log = Log(highlight=True)
             yield self.chat_log
             with Horizontal(id="input-container"):
                 self.input_box = Input(placeholder="Type your message here...")
@@ -192,29 +192,37 @@ class ChatApp(App):
             return
 
         # Bracket markup for bold label
-        self.chat_log.write(f"User: {message}")
+        self.chat_log.write(f"User: {message}\n")  
         self.input_box.value = ""
 
         # Get the response from Ollama
         response = self.fetch_ollama_response(message)
-        self.chat_log.write(f"Assistant: {response}")
+        self.chat_log.write(f"Assistant: {response}\n")  
+
 
     def fetch_ollama_response(self, user_message: str) -> str:
-        """
-        Calls the local Ollama endpoint with 'stream': False for a single JSON response.
-        """
         try:
+            print(f"Sending request to Ollama: {user_message}")  # Debugging
+
             resp = requests.post(
                 "http://localhost:11434/api/generate",
-                json={"prompt": user_message, "stream": False}
+                json={"model": "llama3.2", "prompt": user_message, "stream": False}
             )
-            data = resp.json()  # parse single JSON object
-            return data.get("response", "No response from Ollama.")
+
+            print(f"Response status code: {resp.status_code}")  # Debugging
+            print(f"Response text: {resp.text}")  # Debugging
+
+            if resp.status_code != 200:
+                return f"Error: Received status code {resp.status_code}"
+
+            data = resp.json()
+            return data.get("response", "No response key found in JSON.")
         except Exception as e:
-            return f"Error calling Ollama: {e}"
+            return f"Error calling Ollama: {str(e)}"
+
 
 def main():
     cli()
 
 if __name__ == "__main__":
-    main()
+    main() 
