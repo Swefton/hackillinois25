@@ -1,15 +1,15 @@
+importlib,https://github.com/brettcannon/importlib
+re,https://docs.python.org/3/library/re.html
+csv,https://docs.python.org/3/library/csv.html
+sys,https://docs.python.org/3/library/sys.html
+requests,https://requests.readthedocs.io
+find_libs,Documentation not found for 'find_libs'.
+json,https://docs.python.org/3/library/json.html
+bs4,https://docs.python.org/3/library/bs4.html
+os,https://docs.python.org/3/library/os.html
 libraryfetcher,Documentation not found for 'libraryfetcher'.
 math,https://docs.python.org/3/library/math.html
-sys,https://docs.python.org/3/library/sys.html
-importlib,https://github.com/brettcannon/importlib
-requests,https://requests.readthedocs.io
-csv,https://docs.python.org/3/library/csv.html
-re,https://docs.python.org/3/library/re.html
+sentence_transformers,Documentation not found for 'sentence_transformers'.
 faiss,https://github.com/facebookresearch/faiss
 numpy,https://numpy.org/doc/
 xml,https://docs.python.org/3/library/xml.html
-os,https://docs.python.org/3/library/os.html
-bs4,Documentation not found for 'bs4'.
-sentence_transformers,Documentation not found for 'sentence_transformers'.
-json,https://docs.python.org/3/library/json.html
-find_libs,Documentation not found for 'find_libs'.
