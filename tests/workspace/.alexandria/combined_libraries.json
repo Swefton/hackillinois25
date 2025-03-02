@@ -1,16 +1,36 @@
 {
     "python": [
         {
-            "library": "os",
-            "doc_link": "Documentation not found for 'os'."
+            "library": "django",
+            "doc_link": "https://docs.djangoproject.com/"
         },
         {
-            "library": "pycord",
-            "doc_link": "Documentation not found for 'pycord'."
+            "library": "fastapi",
+            "doc_link": "https://fastapi.tiangolo.com/"
         },
         {
-            "library": "sentence_transformers",
-            "doc_link": "Documentation not found for 'sentence_transformers'."
+            "library": "flask",
+            "doc_link": "https://flask.palletsprojects.com/"
+        },
+        {
+            "library": "nltk",
+            "doc_link": "https://www.nltk.org/"
+        },
+        {
+            "library": "pygame",
+            "doc_link": "https://pygame.org/docs"
+        },
+        {
+            "library": "requests",
+            "doc_link": "https://requests.readthedocs.io"
+        },
+        {
+            "library": "scipy",
+            "doc_link": "https://docs.scipy.org/doc/scipy/"
+        },
+        {
+            "library": "scrapy",
+            "doc_link": "https://docs.scrapy.org/"
         },
         {
             "library": "spotipy",
