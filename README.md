@@ -67,17 +67,18 @@ Build (if necessary): If Alexandria requires building or compiling components, f
 
 
 Contributing
-Contributions are welcome! If you want to contribute to Alexandria:
+Contributions are welcome! To contribute to Alexandria, please follow these steps:
 
--Fork the repository.
-
--Create a new branch (git checkout -b feature/YourFeature).
-
--Make your changes and commit them.
-
--Push to your fork and create a pull request.
-
--Please refer to our CONTRIBUTING.md file for more details.
+Fork the repository.
+- Create a new branch:
+```
+bash
+Copy
+git checkout -b feature/YourFeature
+```
+- Make your changes and commit them.
+- Push to your fork and create a pull request.
+- For more details, please refer to our CONTRIBUTING.md file.
 
 License
 This project is licensed under the MIT License. See the LICENSE file for details.
