@@ -3,7 +3,6 @@
 import os
 import click
 import requests
-
 from rich import print as rprint
 from rich.panel import Panel
 from rich import box
@@ -14,14 +13,14 @@ from prompt_toolkit.styles import Style
 
 # Style so that typed text is blue
 session_style = Style.from_dict({
-    '': 'ansiblue'  # or use '#0000ff' if you prefer a hex color
+    '': 'ansiblue'
 })
 session = PromptSession(style=session_style)
 
 @click.group()
 def cli():
     """
-    Hackillinois CLI:
+    Alexandria CLI:
       - activate: Scrape files in a given directory.
       - chat: Launch a simple in-terminal chat interface.
     """
@@ -57,40 +56,54 @@ def chat():
     """
     Launch a barebone chat interface.
     """
-    rprint(Panel("Welcome to Hackillinois Chat",
-                 title="Hackillinois Chat",
-                 border_style="green",
-                 box=box.ROUNDED))
+    rprint(
+        Panel(
+            "Welcome to Alexandria Chat",
+            title="Alexandria",
+            border_style="green",
+            box=box.ROUNDED
+        )
+    )
 
     while True:
         try:
             # Prompt user for input in blue
-            user_input = session.prompt("User: >> ")
+            user_input = session.prompt(">> ")
 
-            # Let user exit
+            # Allow user to exit
             if user_input.lower() in ("exit", "quit"):
                 rprint(Panel("Exiting chat...", border_style="red", box=box.ROUNDED))
                 break
 
-            # Show user’s message in a blue panel
-            rprint(Panel(f"[bold blue]User:[/bold blue] {user_input}",
-                         border_style="blue",
-                         box=box.ROUNDED))
+            # Move cursor up one line and clear it, removing ">> hi"
+            print("\033[A\033[K", end='')
 
-            # Fetch a response (adjust as needed for your actual endpoint/model)
+            # Now print the user’s message in a blue panel
+            rprint(
+                Panel(
+                    f"[bold blue]User:[/bold blue] {user_input}",
+                    border_style="blue",
+                    box=box.ROUNDED
+                )
+            )
+
+            # Fetch assistant response
             response = fetch_ollama_response(user_input)
+            rprint(
+                Panel(
+                    f"[bold magenta]Assistant:[/bold magenta] {response}",
+                    border_style="magenta",
+                    box=box.ROUNDED
+                )
+            )
 
-            # Show assistant response in a magenta panel
-            rprint(Panel(f"[bold magenta]Assistant:[/bold magenta] {response}",
-                         border_style="magenta",
-                         box=box.ROUNDED))
         except KeyboardInterrupt:
             rprint(Panel("Exiting chat...", border_style="red", box=box.ROUNDED))
             break
 
 def fetch_ollama_response(user_message: str) -> str:
     """
-    Example function to get a response from Ollama. 
+    Example function to get a response from Ollama.
     Adjust for your actual endpoint/model as needed.
     """
     try:
