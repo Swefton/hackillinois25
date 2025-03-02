@@ -5,7 +5,7 @@
             "Spotipy is a lightweight Python library for the Spotify Web API. With Spotipy\nyou get full access to all of the music data provided by the Spotify platform."
         ],
         "code": [],
-        "url": "https://spotipy.readthedocs.io/en/2.25.1/"
+        "url": "https://spotipy.readthedocs.org/"
     },
     {
         "title": "Features",
@@ -13,7 +13,7 @@
             "Spotipy supports all of the features of the Spotify Web API including access\nto all end points, and support for user authorization. For details on the\ncapabilities you are encouraged to review the Spotify Web\nAPI documentation."
         ],
         "code": [],
-        "url": "https://spotipy.readthedocs.io/en/2.25.1/"
+        "url": "https://spotipy.readthedocs.org/"
     },
     {
         "title": "Installation",
@@ -24,7 +24,7 @@
         "code": [
             "pip install spotipy --upgrade"
         ],
-        "url": "https://spotipy.readthedocs.io/en/2.25.1/"
+        "url": "https://spotipy.readthedocs.org/"
     },
     {
         "title": "Getting Started",
@@ -39,7 +39,7 @@
             "For a longer tutorial with examples included, refer to this video playlist."
         ],
         "code": [],
-        "url": "https://spotipy.readthedocs.io/en/2.25.1/"
+        "url": "https://spotipy.readthedocs.org/"
     },
     {
         "title": "Authorization Code Flow",
@@ -47,7 +47,7 @@
             "This flow is suitable for long-running applications in which the user grants\npermission only once. It provides an access token that can be refreshed.\nSince the token exchange involves sending your secret key, perform this on a\nsecure location, like a backend service, and not from a client such as a\nbrowser or from a mobile app."
         ],
         "code": [],
-        "url": "https://spotipy.readthedocs.io/en/2.25.1/"
+        "url": "https://spotipy.readthedocs.org/"
     },
     {
         "title": "Quick start",
@@ -61,7 +61,7 @@
             "export",
             "export SPOTIPY_CLIENT_ID='your-spotify-client-id'\nexport SPOTIPY_CLIENT_SECRET='your-spotify-client-secret'\nexport SPOTIPY_REDIRECT_URI='your-app-redirect-url'"
         ],
-        "url": "https://spotipy.readthedocs.io/en/2.25.1/"
+        "url": "https://spotipy.readthedocs.org/"
     },
     {
         "title": "Scopes",
@@ -69,7 +69,7 @@
             "See Using\nScopes for information\nabout scopes."
         ],
         "code": [],
-        "url": "https://spotipy.readthedocs.io/en/2.25.1/"
+        "url": "https://spotipy.readthedocs.org/"
     },
     {
         "title": "Redirect URI",
@@ -86,7 +86,7 @@
             "http://example.com",
             "http://127.0.0.1:9090"
         ],
-        "url": "https://spotipy.readthedocs.io/en/2.25.1/"
+        "url": "https://spotipy.readthedocs.org/"
     },
     {
         "title": "Client Credentials Flow",
@@ -100,7 +100,7 @@
             "export SPOTIPY_CLIENT_ID='your-spotify-client-id'\nexport SPOTIPY_CLIENT_SECRET='your-spotify-client-secret'",
             "import spotipy\nfrom spotipy.oauth2 import SpotifyClientCredentials\n\nauth_manager = SpotifyClientCredentials()\nsp = spotipy.Spotify(auth_manager=auth_manager)\n\nplaylists = sp.user_playlists('spotify')\nwhile playlists:\n    for i, playlist in enumerate(playlists['items']):\n        print(f\"{i + 1 + playlists['offset']:4d} {playlist['uri']} {playlist['name']}\")\n    if playlists['next']:\n        playlists = sp.next(playlists)\n    else:\n        playlists = None"
         ],
-        "url": "https://spotipy.readthedocs.io/en/2.25.1/"
+        "url": "https://spotipy.readthedocs.org/"
     },
     {
         "title": "IDs URIs and URLs",
@@ -116,7 +116,7 @@
             "http://open.spotify.com/track/6rqhFgbbKwnb9MLmUQDhG6",
             "6rqhFgbbKwnb9MLmUQDhG6"
         ],
-        "url": "https://spotipy.readthedocs.io/en/2.25.1/"
+        "url": "https://spotipy.readthedocs.org/"
     },
     {
         "title": "Customized token caching",
@@ -146,7 +146,7 @@
             "MemcacheCacheHandler",
             "pip install \"spotipy[pymemcache]\""
         ],
-        "url": "https://spotipy.readthedocs.io/en/2.25.1/"
+        "url": "https://spotipy.readthedocs.org/"
     },
     {
         "title": "Examples",
@@ -161,13 +161,13 @@
             "import spotipy\nfrom spotipy.oauth2 import SpotifyClientCredentials\n\nlz_uri = 'spotify:artist:36QJpDe2go2KgaRleHCDTp'\n\nspotify = spotipy.Spotify(client_credentials_manager=SpotifyClientCredentials())\nresults = spotify.artist_top_tracks(lz_uri)\n\nfor track in results['tracks'][:10]:\n    print('track    : ' + track['name'])\n    print('audio    : ' + track['preview_url'])\n    print('cover art: ' + track['album']['images'][0]['url'])\n    print()",
             "import spotipy\nimport sys\nfrom spotipy.oauth2 import SpotifyClientCredentials\n\nspotify = spotipy.Spotify(auth_manager=SpotifyClientCredentials())\n\nif len(sys.argv) > 1:\n    name = ' '.join(sys.argv[1:])\nelse:\n    name = 'Radiohead'\n\nresults = spotify.search(q='artist:' + name, type='artist')\nitems = results['artists']['items']\nif len(items) > 0:\n    artist = items[0]\n    print(artist['name'], artist['images'][0]['url'])"
         ],
-        "url": "https://spotipy.readthedocs.io/en/2.25.1/"
+        "url": "https://spotipy.readthedocs.org/"
     },
     {
         "title": "API Reference",
         "content": [],
         "code": [],
-        "url": "https://spotipy.readthedocs.io/en/2.25.1/"
+        "url": "https://spotipy.readthedocs.org/"
     },
     {
         "title": "client Module",
@@ -551,7 +551,7 @@
             "import spotipy\n\nurn = 'spotify:artist:3jOstUTkEu2JkjvRdBA5Gu'\nsp = spotipy.Spotify()\n\nartist = sp.artist(urn)\nprint(artist)\n\nuser = sp.user('plamere')\nprint(user)",
             "SpotifyBaseException"
         ],
-        "url": "https://spotipy.readthedocs.io/en/2.25.1/"
+        "url": "https://spotipy.readthedocs.org/"
     },
     {
         "title": "oauth2 Module",
@@ -578,7 +578,7 @@
             "SpotifyAuthBase",
             "SpotifyAuthBase"
         ],
-        "url": "https://spotipy.readthedocs.io/en/2.25.1/"
+        "url": "https://spotipy.readthedocs.org/"
     },
     {
         "title": "Security Warning",
@@ -594,7 +594,7 @@
             "See help(SpotifyImplicitGrant) for full Security Warning"
         ],
         "code": [],
-        "url": "https://spotipy.readthedocs.io/en/2.25.1/"
+        "url": "https://spotipy.readthedocs.org/"
     },
     {
         "title": "Parameters",
@@ -610,7 +610,7 @@
             "Gets Auth Token from cache (preferred) or user interaction"
         ],
         "code": [],
-        "url": "https://spotipy.readthedocs.io/en/2.25.1/"
+        "url": "https://spotipy.readthedocs.org/"
     },
     {
         "title": "Parameters",
@@ -676,7 +676,7 @@
             "SpotifyAuthBase",
             "SpotifyOauthError"
         ],
-        "url": "https://spotipy.readthedocs.io/en/2.25.1/"
+        "url": "https://spotipy.readthedocs.org/"
     },
     {
         "title": "util Module",
@@ -684,7 +684,7 @@
         "code": [
             "util"
         ],
-        "url": "https://spotipy.readthedocs.io/en/2.25.1/"
+        "url": "https://spotipy.readthedocs.org/"
     },
     {
         "title": "Support",
@@ -694,7 +694,7 @@
             "If you think you’ve found a bug, let us know at\nSpotipy Issues"
         ],
         "code": [],
-        "url": "https://spotipy.readthedocs.io/en/2.25.1/"
+        "url": "https://spotipy.readthedocs.org/"
     },
     {
         "title": "Contribute",
@@ -721,7 +721,7 @@
             "Don’t forget to add a short description of your change in the CHANGELOG!"
         ],
         "code": [],
-        "url": "https://spotipy.readthedocs.io/en/2.25.1/"
+        "url": "https://spotipy.readthedocs.org/"
     },
     {
         "title": "License",
@@ -731,7 +731,7 @@
         "code": [
             "MIT License\nCopyright (c) 2021 Paul Lamere\nPermission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files\n(the \"Software\"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge,\npublish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do\nso, subject to the following conditions:\nThe above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.\nTHE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES\nOF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE\nLIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR\nIN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE."
         ],
-        "url": "https://spotipy.readthedocs.io/en/2.25.1/"
+        "url": "https://spotipy.readthedocs.org/"
     },
     {
         "title": "Indices and tables",
@@ -742,6 +742,6 @@
             "© Copyright 2014, Paul Lamere."
         ],
         "code": [],
-        "url": "https://spotipy.readthedocs.io/en/2.25.1/"
+        "url": "https://spotipy.readthedocs.org/"
     }
 ]

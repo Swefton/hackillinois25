@@ -3,7 +3,7 @@ import csv
 import json
 
 # Import the scanning functions from find_libs.py
-from find_libs import (
+from libfetch.find_libs import (
     find_python_libraries,
     find_node_libraries,
     find_ruby_libraries,
@@ -15,7 +15,7 @@ from find_libs import (
 )
 
 # Import the doc-fetching functions from libraryfetcher.py
-from libraryfetcher import (
+from libfetch.libraryfetcher import (
     get_python_doc_url,
     get_npm_doc_url,
     get_rubygems_doc_url,
@@ -49,7 +49,7 @@ def load_common_libraries_csv(language):
 
     return common_map
 
-def main():
+def parse_workspace_for_libraries(alexandria_folder, directory):
     # 1) Map each language to its scanning function
     language_find_functions = {
         "python": find_python_libraries,
@@ -64,7 +64,7 @@ def main():
 
     # 2) Map each language to the library-fetching function (doc URL lookup)
     language_fetcher_functions = {
-        "python": get_python_doc_url,   # uses built-in or PyPI
+        "python": get_python_doc_url,
         "node": get_npm_doc_url,
         "ruby": get_rubygems_doc_url,
         "php": get_packagist_doc_url,
@@ -75,7 +75,6 @@ def main():
     }
 
     # 3) Minimal fallback mappings for ambiguous short inputs.
-    # (This is minimal—only for very common cases.)
     fallback_maps = {
         "python": {
             "opencv": "opencv-python",
@@ -83,7 +82,6 @@ def main():
             "pd": "pandas",
             "bs4": "beautifulsoup"
         },
-        # You can define fallback maps for other ecosystems if needed.
     }
 
     combined_results = {}
@@ -91,7 +89,7 @@ def main():
     # 4) Process each language
     for lang, finder_func in language_find_functions.items():
         print(f"Scanning for {lang} libraries...")
-        libs = finder_func(".")  # Adjust the scanning directory as needed
+        libs = finder_func(directory) 
         if libs is None:
             libs = set()
         else:
@@ -104,16 +102,13 @@ def main():
         fetcher_func = language_fetcher_functions.get(lang)
 
         for lib in sorted(libs):
-            # If a common documentation link exists, use it.
             if lib in common_map:
                 doc_link = common_map[lib]
             else:
-                # If there is a fallback mapping for this language, check if we should remap.
                 if lang in fallback_maps and lib.lower() in fallback_maps[lang]:
                     original = lib
                     lib = fallback_maps[lang][lib.lower()]
                     print(f"[{lang}] Mapping ambiguous '{original}' to '{lib}'.")
-                # Use the fetcher function for this language.
                 if fetcher_func:
                     doc_link = fetcher_func(lib)
                 else:
@@ -122,18 +117,14 @@ def main():
                     doc_link = f"Documentation not found for '{lib}'."
             results.append({"library": lib, "doc_link": doc_link})
 
-        # Store results even if empty.
         combined_results[lang] = results
 
-    # 5) Write the combined results to one JSON file.
-    os.makedirs("library_links", exist_ok=True)
-    out_file = "library_links/combined_libraries.json"
-    try:
-        with open(out_file, "w", encoding="utf-8") as f:
-            json.dump(combined_results, f, indent=4)
-        print(f"Combined libraries written to {out_file}")
-    except Exception as e:
-        print(f"Error writing {out_file}: {e}")
+    # 5) Save the combined results inside the .alexandria folder
+    alexandria_library_path = os.path.join(alexandria_folder, "combined_libraries.json")
 
-if __name__ == "__main__":
-    main()
+    try:
+        with open(alexandria_library_path, "w", encoding="utf-8") as f:
+            json.dump(combined_results, f, indent=4)
+        print(f"✅ Combined libraries saved to {alexandria_library_path}")
+    except Exception as e:
+        print(f"❌ Error writing {alexandria_library_path}: {e}")
