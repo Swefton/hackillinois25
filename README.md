@@ -37,14 +37,52 @@ Powered by FAISS for fast semantic search and Ollama for local AI reasoning, Ale
 
 Clone the repo 
 ```
-instructions
+git clone https://github.com/yourusername/alexandria.git
+cd alexandria
 ```
 Install ollama
+
+Alexandria uses Ollama for local AI reasoning. If you haven't installed Ollama yet, follow these steps:
+Visit the Ollama website for download and installation instructions.
+Install Ollama according to your operating system's guidelines.
+Verify your installation by running:
 ```
-install guide
+bash
+Copy
+ollama version
+
 ```
+Build and Set Up Alexandria
+Dependencies: Install any required dependencies. For example, if Alexandria is built with Python, run:
+```
+pip install -r requirements.txt
+```
+Configuration: Customize your Alexandria configuration if needed. A sample configuration file (config.example.json) is provided—copy it to config.json and adjust the settings.
+
+Build (if necessary): If Alexandria requires building or compiling components, follow the build instructions in the BUILD.md file.
+
 # Demo
 
 [![AI Did My Groceries](https://github.com/user-attachments/assets/d9359085-bde6-41d4-aa4e-6520d0221872)](https://www.youtube.com/watch?v=L2Ya9PYNns8)
+
+
+Contributing
+Contributions are welcome! If you want to contribute to Alexandria:
+
+-Fork the repository.
+
+-Create a new branch (git checkout -b feature/YourFeature).
+
+-Make your changes and commit them.
+
+-Push to your fork and create a pull request.
+
+-Please refer to our CONTRIBUTING.md file for more details.
+
+License
+This project is licensed under the MIT License. See the LICENSE file for details.
+
+Support
+If you encounter any issues or have questions, please open an issue on the repository or reach out via our community channels.
 
 
