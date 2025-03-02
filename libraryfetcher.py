@@ -11,73 +11,50 @@ def is_builtin(library_name):
 def get_builtin_doc_url(library_name):
     return f"https://docs.python.org/3/library/{library_name}.html"
 
+def is_standard_library(library_name):
+    spec = importlib.util.find_spec(library_name)
+    if spec is None:
+        return False
+    if spec.origin == 'built-in':
+        return True
+    if spec.origin and 'site-packages' not in spec.origin:
+        return True
+    return False
+
+def get_stdlib_doc_url(library_name):
+    if is_standard_library(library_name):
+        return f"https://docs.python.org/3/library/{library_name}.html"
+    return None
+
 def get_pypi_doc_url(library_name):
-    """
-    Tries to find a "Documentation" or "Docs" URL on PyPI.
-    Falls back to docs_url, homepage, or home_page if a direct docs link is absent.
-    """
     url = f"https://pypi.org/pypi/{library_name}/json"
     response = requests.get(url)
     if response.status_code == 200:
         info = response.json().get('info', {})
         urls = info.get('project_urls') or {}
-        # 1) Check for documentation keys explicitly
+        # Check common documentation keys
         for key in ['Documentation', 'Docs', 'documentation']:
             if key in urls and urls[key]:
                 return urls[key]
-        # 2) Check docs_url field
         docs_url = info.get('docs_url')
         if docs_url:
             return docs_url
-        # 3) Check 'Home' or homepage fields
         if 'Home' in urls and urls['Home']:
             return urls['Home']
-        return info.get('home_page')
+        if info.get('home_page'):
+            return info['home_page']
+        # Fallback to the PyPI project page if nothing else was found
+        return f"https://pypi.org/project/{library_name}"
     return None
-
-# 1) A set of known standard library modules that appear on docs.python.org
-#    but won't show up as "built-in" in importlib for historical reasons.
-#    This list can be expanded as needed.
-STANDARD_LIBRARY = {
-    "os", "re", "json", "csv", "xml", "bs4", "sys", "math", "time", 
-    "enum", "typing", "functools", "itertools", "logging"
-}
-
-# 2) A mapping for modules whose PyPI project name differs from import name.
-#    For example, "bs4" is installed as "beautifulsoup4". If the user asks for
-#    "bs4", we should search PyPI under "beautifulsoup4".
-PYPI_ALIASES = {
-    "bs4": "beautifulsoup4"
-}
 
 def get_python_doc_url(library_name):
-    """
-    Returns a documentation URL for a Python library, attempting:
-      1. A built-in check (C-level, e.g. sys/time).
-      2. A known standard library fallback (like 'os', 're', etc.).
-      3. Known PyPI aliases (e.g. bs4 → beautifulsoup4).
-      4. A normal PyPI lookup (project_urls).
-    """
-    # 1) If it’s truly built-in, return the official docs link
     if is_builtin(library_name):
         return get_builtin_doc_url(library_name)
-
-    # 2) If it’s in the known standard library set, return the official docs link.
-    #    Even though these might not have origin == 'built-in', they are part of stdlib.
-    if library_name in STANDARD_LIBRARY:
-        return f"https://docs.python.org/3/library/{library_name}.html"
-
-    # 3) If the library has a known PyPI alias, swap it out
-    #    before we do the PyPI check. E.g. "bs4" → "beautifulsoup4".
-    pypi_name = PYPI_ALIASES.get(library_name, library_name)
-
-    # 4) Attempt PyPI metadata look-up
-    doc_url = get_pypi_doc_url(pypi_name)
-    if doc_url:
-        return doc_url
-
-    # If we still haven't found anything, return None
-    return None
+    if is_standard_library(library_name):
+        return get_stdlib_doc_url(library_name)
+    else:
+        doc_url = get_pypi_doc_url(library_name)
+        return doc_url if doc_url else None
 
 # =============================
 # Node.js (npm) Ecosystem Functions
@@ -124,7 +101,6 @@ def get_packagist_doc_url(package_name):
         data = response.json()
         packages = data.get('packages', {}).get(package_name, {})
         if packages:
-            # Choose the latest version (sorting keys in reverse order)
             versions = sorted(packages.keys(), reverse=True)
             for version in versions:
                 info = packages[version]
@@ -138,7 +114,6 @@ def get_packagist_doc_url(package_name):
 # Java (Maven Central) Ecosystem Functions
 # =============================
 def get_maven_doc_url(library_name):
-    # Expect library_name in the format "groupId:artifactId"
     try:
         groupId, artifactId = library_name.split(':')
     except Exception:
@@ -149,7 +124,6 @@ def get_maven_doc_url(library_name):
         data = response.json()
         docs = data.get('response', {}).get('docs', [])
         if docs:
-            # If available, return homepage; otherwise, fallback to the Maven Central project page
             if 'homepage' in docs[0] and docs[0]['homepage']:
                 return docs[0]['homepage']
             else:
@@ -160,7 +134,6 @@ def get_maven_doc_url(library_name):
 # .NET (NuGet) Ecosystem Functions
 # =============================
 def get_nuget_doc_url(library_name):
-    # library_name is the package ID, e.g. Newtonsoft.Json
     url = f"https://api.nuget.org/v3/registration5-semver1/{library_name.lower()}/index.json"
     response = requests.get(url)
     if response.status_code == 200:
@@ -180,7 +153,6 @@ def get_nuget_doc_url(library_name):
 # Go Ecosystem Functions
 # =============================
 def get_go_doc_url(library_name):
-    # For Go libraries, assume the input is the package's import path.
     return f"https://pkg.go.dev/{library_name}"
 
 # =============================

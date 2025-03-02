@@ -1,15 +1,15 @@
-importlib,https://github.com/brettcannon/importlib
-re,https://docs.python.org/3/library/re.html
-csv,https://docs.python.org/3/library/csv.html
-sys,https://docs.python.org/3/library/sys.html
 requests,https://requests.readthedocs.io
-find_libs,Documentation not found for 'find_libs'.
-json,https://docs.python.org/3/library/json.html
-bs4,https://docs.python.org/3/library/bs4.html
-os,https://docs.python.org/3/library/os.html
-libraryfetcher,Documentation not found for 'libraryfetcher'.
-math,https://docs.python.org/3/library/math.html
-sentence_transformers,Documentation not found for 'sentence_transformers'.
 faiss,https://github.com/facebookresearch/faiss
-numpy,https://numpy.org/doc/
+re,https://docs.python.org/3/library/re.html
 xml,https://docs.python.org/3/library/xml.html
+os,https://docs.python.org/3/library/os.html
+find_libs,https://docs.python.org/3/library/find_libs.html
+json,https://docs.python.org/3/library/json.html
+libraryfetcher,https://docs.python.org/3/library/libraryfetcher.html
+sys,https://docs.python.org/3/library/sys.html
+math,https://docs.python.org/3/library/math.html
+importlib,https://docs.python.org/3/library/importlib.html
+sentence_transformers,https://pypi.org/project/sentence_transformers
+beautifulsoup,http://www.crummy.com/software/BeautifulSoup/
+csv,https://docs.python.org/3/library/csv.html
+numpy,https://numpy.org/doc/

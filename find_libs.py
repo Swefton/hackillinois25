@@ -3,10 +3,77 @@ import re
 import json
 import xml.etree.ElementTree as ET
 
-def find_python_libraries(directory="."):
-    """Scan .py files for top-level imports."""
+# Optional: known import-name-to-PyPI-name mapping
+ALIAS_MAP = {
+    "bs4": "beautifulsoup",
+    # Add others as needed
+}
+
+def parse_import_line(line):
+    """
+    Parse a single line of Python code looking for import statements.
+    Return a set of top-level library names discovered.
+    """
     libraries = set()
-    import_pattern = re.compile(r'^\s*(?:import|from)\s+([a-zA-Z_][a-zA-Z0-9_]*)')
+
+    # Remove inline comments to avoid confusion, e.g., "import foo  # comment"
+    if "#" in line:
+        line = line.split("#", 1)[0]
+    line = line.strip()
+
+    # Regex patterns to capture multiple forms of imports
+    # Examples of matches we want to handle:
+    #   import foo
+    #   import foo, bar
+    #   import foo as f, bar
+    #   from foo import something
+    #   from foo.bar import something
+    #   from foo.bar.baz import something as x
+    #   import foo.bar
+    import_pattern = r'^\s*import\s+(.*)'
+    from_pattern = r'^\s*from\s+([a-zA-Z0-9_\.]+)\s+import\s+(.*)'
+
+    # Case 1: "import ..."
+    m_import = re.match(import_pattern, line)
+    if m_import:
+        # Everything after "import"
+        remainder = m_import.group(1)
+        # Split on commas, e.g. "foo as f, bar" → ["foo as f", " bar"]
+        chunks = remainder.split(',')
+        for chunk in chunks:
+            chunk = chunk.strip()
+            # Remove " as alias" if present, e.g. "foo as f" → "foo"
+            chunk = chunk.split()[0]  # because chunk might be "foo" or "foo as something"
+            # Strip off submodules: "foo.bar" → "foo"
+            top_level = chunk.split('.', 1)[0]
+            # Map known aliases if needed
+            if top_level in ALIAS_MAP:
+                top_level = ALIAS_MAP[top_level]
+            libraries.add(top_level)
+        return libraries
+
+    # Case 2: "from foo import ..."
+    m_from = re.match(from_pattern, line)
+    if m_from:
+        # The group(1) is the part after 'from' and before 'import'
+        top_level = m_from.group(1).split('.', 1)[0]
+        if top_level in ALIAS_MAP:
+            top_level = ALIAS_MAP[top_level]
+        libraries.add(top_level)
+        return libraries
+
+    return libraries
+
+def find_python_libraries(directory="."):
+    """
+    Scan .py files for Python imports, handling:
+      - import foo, bar as b
+      - from foo.bar import baz
+      - multiple imports on one line
+      - aliases
+      - submodules
+    """
+    libraries = set()
     for root, dirs, files in os.walk(directory):
         # Skip hidden directories
         dirs[:] = [d for d in dirs if not d.startswith(".")]
@@ -16,9 +83,8 @@ def find_python_libraries(directory="."):
                 try:
                     with open(file_path, "r", encoding="utf-8", errors="ignore") as f:
                         for line in f:
-                            match = import_pattern.match(line)
-                            if match:
-                                libraries.add(match.group(1))
+                            found = parse_import_line(line)
+                            libraries.update(found)
                 except Exception as e:
                     print(f"Skipping {file_path}: {e}")
     return libraries
@@ -27,14 +93,13 @@ def find_node_libraries(directory="."):
     """Find Node libraries by parsing package.json files while skipping node_modules and hidden directories."""
     libraries = set()
     for root, dirs, files in os.walk(directory):
-        # Skip hidden directories and node_modules
         dirs[:] = [d for d in dirs if not d.startswith(".") and d != "node_modules"]
         if "package.json" in files:
             file_path = os.path.join(root, "package.json")
             try:
                 with open(file_path, "r", encoding="utf-8", errors="ignore") as f:
                     data = json.load(f)
-                    # Only use production dependencies to avoid too many libraries.
+                    # Only use production dependencies
                     deps = data.get("dependencies", {})
                     libraries.update(deps.keys())
             except Exception as e:
