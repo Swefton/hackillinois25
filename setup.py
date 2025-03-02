@@ -1,7 +1,7 @@
 from setuptools import setup, find_packages
 
 setup(
-    name="hackillinois25",
+    name="alexandria",
     version="0.1.0",
     packages=find_packages(),
     install_requires=[
@@ -15,7 +15,7 @@ setup(
     ],
     entry_points={
         "console_scripts": [
-            "hackillinois25=hackillinois25.cli:cli",
+            "alexandria=alexandria.cli:cli",
         ],
     },
 )
