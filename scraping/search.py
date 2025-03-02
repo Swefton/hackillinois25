@@ -37,29 +37,38 @@ if code_embeddings is not None:
 def search_docs(query, k=3):
     print(f"\n🔎 Searching for: {query}")
 
-    # Step 1: Title Search (Find the most relevant section)
+    # Step 1: Title Search (Find the top-k relevant sections)
     query_embedding = text_model.encode([query])
-    _, title_idx = faiss_index.search(np.array(query_embedding, dtype=np.float32), 1)
-    best_section = sections[title_idx[0][0]]  # Most relevant title section
+    _, title_idx = faiss_index.search(np.array(query_embedding, dtype=np.float32), k)
+    best_sections = [sections[i] for i in title_idx[0]]  # Top-k relevant sections
 
-    print(f"\n📌 Best Matching Section: {best_section['title']}")
+    for rank, best_section in enumerate(best_sections, 1):
+        print(f"\n🏆 Rank {rank} | 📌 Section: {best_section['title']}")
 
-    # Step 2: Paragraph Search within the Best Section
-    paragraph_scores = bm25.get_scores(query.split())
-    best_paragraph_idx = np.argmax(paragraph_scores)
-    best_paragraph = sections[best_paragraph_idx]["content"]
+        # Step 2: BM25 Search **ONLY Within This Section**
+        section_paragraphs = best_section["content"]
+        
+        if not section_paragraphs:
+            print("\n❌ No matching content found.")
+            continue
+        
+        bm25_section = BM25Okapi([p.split() for p in section_paragraphs])  # Only use paragraphs from best section
+        paragraph_scores = bm25_section.get_scores(query.split())
 
-    print("\n📖 Best Matching Explanation:\n")
-    print("\n".join(best_paragraph))
+        # Pick the highest-scoring paragraph **within this section**
+        best_paragraph_idx = np.argmax(paragraph_scores)
+        best_paragraph = section_paragraphs[best_paragraph_idx]
 
-    # Step 3: Code Search within the Best Section
-    if best_section["code"]:
-        print("\n💻 Code Example:\n")
-        print("\n".join(best_section["code"]))
-    else:
-        print("\n❌ No code found for this query.")
+        print("\n📖 Best Matching Explanation:")
+        print(best_paragraph)
+
+        # Step 3: Code Search within the Best Section
+        if best_section["code"]:
+            print("\n💻 Code Example:")
+            print("\n".join(best_section["code"]))
+        else:
+            print("\n❌ No code found for this query.")
 
 
 # Example Queries
-search_docs("how to read the content of a server response")
-search_docs("how to make a request in Python")
+search_docs("read content server response", k=3)

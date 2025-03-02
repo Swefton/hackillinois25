@@ -27,6 +27,7 @@ def fetch_all_links(start_url):
     
     while queue:
         url = queue.popleft()
+        print(url)
         if url in visited:
             continue
         visited.add(url)
@@ -43,7 +44,7 @@ def fetch_all_links(start_url):
     return all_links
 
 # Example usage
-start_url = "https://requests.readthedocs.io/en/latest/"
+start_url = "https://docs.pycord.dev/en/stable/api/index.html"
 all_links = fetch_all_links(start_url)
 
 # Print all links

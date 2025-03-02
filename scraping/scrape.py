@@ -1,7 +1,7 @@
 import requests
 from bs4 import BeautifulSoup
 import json
-from urllib.parse import urljoin, urlparse
+from urllib.parse import urljoin, urlparse, urldefrag
 from collections import deque
 
 def get_valid_links(soup, base_url, visited):
@@ -10,20 +10,42 @@ def get_valid_links(soup, base_url, visited):
     for a_tag in soup.find_all("a", href=True):
         href = a_tag["href"].strip()
         full_url = urljoin(base_url, href)
+        full_url, _ = urldefrag(full_url)  # Remove fragment identifiers
         parsed_url = urlparse(full_url)
         
         # Ensure it's within the same domain and not visited
         if parsed_url.netloc == urlparse(base_url).netloc and full_url not in visited:
-            if "#" not in parsed_url.path and "search" not in parsed_url.path:
+            if "search" not in parsed_url.path:  # Fragment is already removed
+                print("adding", full_url)
                 valid_links.add(full_url)
-    
-    with open("links.txt", "w") as file:
-        for link in valid_links:
-            file.write(link + "\n")
     
     return valid_links
 
-def scrape_webpage(url, visited):
+def fetch_all_links(start_url):
+    """Crawl documentation pages and retrieve all relevant links."""
+    visited = set()
+    queue = deque([start_url])
+    all_links = set()
+    
+    while queue:
+        url = queue.popleft()
+        if url in visited:
+            continue
+        visited.add(url)
+        
+        try:
+            response = requests.get(url)
+            soup = BeautifulSoup(response.text, "html.parser")
+            new_links = get_valid_links(soup, url, visited)
+            all_links.update(new_links)
+            queue.extend(new_links - visited)  # Add only unvisited links
+        except Exception as e:
+            pass
+        
+    return all_links
+
+
+def scrape_webpage(url):
     """Scrape content from a single webpage and return structured sections."""
     response = requests.get(url)
     soup = BeautifulSoup(response.text, "html.parser")
@@ -48,25 +70,25 @@ def scrape_webpage(url, visited):
     if current_section:
         sections.append(current_section)
     
-    return sections, get_valid_links(soup, url, visited)
+    return sections
 
 def scrape_full_documentation(start_url):
     """Crawl all relevant documentation pages and save structured data."""
-    visited = set()
-    queue = deque([start_url])
-    all_sections = []
     
-    while queue:
-        url = queue.popleft()
-        if url in visited:
-            continue
+    all_links = fetch_all_links(start_url)
+
+    for index in range(len(all_links)):
+        print(f"scraping {index}/{len(all_links)}") 
+
+    all_sections = list()
+     
+    for url in all_links:
         print(f"🔎 Scraping: {url}")
-        visited.add(url)
         
         try:
-            sections, new_links = scrape_webpage(url, visited)
+            sections = scrape_webpage(url)
             all_sections.extend(sections)
-            queue.extend(new_links - visited)  # Add only unvisited links
+        
         except Exception as e:
             print(f"❌ Failed to scrape {url}: {e}")
     
@@ -77,5 +99,5 @@ def scrape_full_documentation(start_url):
     return all_sections
 
 # Example usage
-start_url = "https://requests.readthedocs.io/en/latest/"
+start_url = "https://docs.pycord.dev/en/stable/api/index.html"
 scrape_full_documentation(start_url)
