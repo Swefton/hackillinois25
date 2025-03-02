@@ -1,6 +1,6 @@
 import ollama
-import search
-import query_processing
+from scraping import search
+from scraping import query_processing
 
 def get_ai_response(query: str) -> str:
     """

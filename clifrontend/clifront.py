@@ -8,6 +8,8 @@ from textual.containers import Vertical, Horizontal
 from textual.widgets import Header, Footer, Log, Input, Button
 from textual.reactive import var
 
+from scraping.test_model_query import get_ai_response
+
 @click.group()
 def cli():
     """
@@ -201,6 +203,7 @@ class ChatApp(App):
 
 
     def fetch_ollama_response(self, user_message: str) -> str:
+        return get_ai_response(user_message)
         try:
             print(f"Sending request to Ollama: {user_message}")  # Debugging
 

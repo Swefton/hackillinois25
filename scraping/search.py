@@ -2,10 +2,14 @@ from sentence_transformers import SentenceTransformer
 from rank_bm25 import BM25Okapi
 import faiss
 import numpy as np
+import os
 import json
 
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))  # This is the `scraping/` directory
+json_path = os.path.join(BASE_DIR, "structured_docs.json")
+
 # Load structured documentation
-with open("structured_docs.json", "r", encoding="utf-8") as file:
+with open(json_path, "r", encoding="utf-8") as file:
     sections = json.load(file)
 
 # Load embedding models
