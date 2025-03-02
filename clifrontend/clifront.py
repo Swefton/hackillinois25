@@ -4,26 +4,23 @@ import os
 import click
 import requests
 from textual.app import App, ComposeResult
+from textual.screen import Screen
 from textual.containers import Vertical, Horizontal
-from textual.widgets import Header, Footer, Log, Input, Button
+from textual.widgets import Header, Footer, Log, Input, Button, Static
 from textual.reactive import var
-
-from scraping.test_model_query import get_ai_response
 
 @click.group()
 def cli():
     """
     Hackillinois CLI:
       - activate: Scrape files in a given directory.
-      - chat: Launch an in-terminal Textual-based chat UI.
+      - chat: Launch Alexandria – Your CLI Companion (Textual-based).
     """
     pass
 
 @cli.command()
 def activate():
-    """
-    Prompts for a directory path and scrapes all files in that directory.
-    """
+    """Scrape files in a given directory."""
     click.echo("Welcome! Please give path to project (ex: desktop/p1)")
     project_path = input(">> ").strip()
 
@@ -46,88 +43,97 @@ def activate():
 
 @cli.command()
 def chat():
-    """
-    Launch the in-terminal chat interface using Ollama for responses.
-    """
-    ChatApp().run()
+    """Launch Alexandria – Your CLI Companion."""
+    Alexandria().run()
 
-class ChatApp(App):
+# ─────────────────────────────────────────────────────────────────────────────
+# A simple spinning circle widget
+# ─────────────────────────────────────────────────────────────────────────────
+
+class SpinningCircle(Static):
     """
-    A Textual TUI app that sends user messages to Ollama and displays the response.
+    A simple spinner that cycles through frames in a timer.
+    Visible = True => spinner is shown; Visible = False => hidden.
+    """
+
+    frames = ["⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"]
+    frame_index: var[int] = var(0)
+
+    def on_mount(self) -> None:
+        # We'll animate the spinner ~10 FPS
+        self.set_interval(0.1, self.update_spinner)
+        # Hide by default
+        self.visible = False
+
+    def update_spinner(self) -> None:
+        # If visible, cycle frames
+        if self.visible:
+            self.frame_index = (self.frame_index + 1) % len(self.frames)
+            self.update(self.frames[self.frame_index])
+        else:
+            # If hidden, show nothing
+            self.update("")
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Main Chat Screen
+# ─────────────────────────────────────────────────────────────────────────────
+
+class MainChatScreen(Screen):
+    """
+    Main chat UI. We'll embed the spinner in the same screen,
+    toggling visibility when we start or finish the Ollama request.
     """
 
     CSS = """
-    /* ------------------------------------------------------------------------
-       Color variables
-       ------------------------------------------------------------------------ */
-    $bg: #1E1E2E;            /* Main background */
-    $text: #D9E0EE;          /* Default text color */
-    $panel: #2A2B40;         /* Header/footer panel color */
-    $log-bg: #252637;        /* Background for the chat log */
-    $button-send: #FF79C6;   /* "Send" button color (pink) */
-    $button-exit: #FF5555;   /* "Exit" button color (red) */
+    /* Color Variables */
+    $bg:         #16161e;
+    $text:       #c6c8d1;
+    $panel:      #24273a;
+    $log-bg:     #1a1b26;
+    $button-send:#FF79C6;
+    $button-exit:#FF5555;
 
-    /* ------------------------------------------------------------------------
-       Global Styles
-       ------------------------------------------------------------------------ */
     Screen {
         background: $bg;
         color: $text;
     }
 
-    /* ------------------------------------------------------------------------
-       Header (top)
-       ------------------------------------------------------------------------ */
     Header {
         background: $panel;
         text-style: bold;
-        height: 2;
+        height: 3;
         content-align: center middle;
-        color: $text;
         border: none;
+        color: $text;
     }
 
-    /* ------------------------------------------------------------------------
-       Footer (bottom)
-       ------------------------------------------------------------------------ */
     Footer {
         background: $panel;
         height: 1;
-        color: $text;
         border: none;
+        color: $text;
     }
 
-    /* ------------------------------------------------------------------------
-       Main container for the chat
-       ------------------------------------------------------------------------ */
     #chat-container {
         background: $bg;
         width: 90%;
         height: 1fr;
         margin: 1 5;
-        padding: 0;
-        border: none;
-    }
-
-    /* ------------------------------------------------------------------------
-       Scrollable area for messages
-       ------------------------------------------------------------------------ */
-    Log {
-        background: $log-bg;
-        width: 100%;
-        height: 1fr;
         padding: 1;
         border: none;
     }
 
-    /* ------------------------------------------------------------------------
-       Input row (bottom of chat container)
-       ------------------------------------------------------------------------ */
-    #input-container {
+    Log {
+        background: $log-bg;
         width: 100%;
-        height: auto;
-        background: $bg;
+        height: 70%;
+        padding: 1;
         border: none;
+        text-style: bold;
+    }
+
+    #input-container {
+        background: $bg;
         padding: 1;
     }
 
@@ -136,16 +142,13 @@ class ChatApp(App):
         margin-right: 1;
         background: $log-bg;
         color: $text;
+        padding: 1 3;
         border: none;
-        padding: 1 2;
     }
 
-    /* ------------------------------------------------------------------------
-       Buttons
-       ------------------------------------------------------------------------ */
     Button {
         width: auto;
-        padding: 0 2;
+        padding: 1 4;
         color: black;
         text-style: bold;
         margin-left: 1;
@@ -159,73 +162,95 @@ class ChatApp(App):
     Button#exit_button {
         background: $button-exit;
     }
+
+    /* Position the spinner next to the Send/Exit buttons or somewhere else if desired */
+    #spinner-container {
+        width: auto;
+        margin-left: 2;
+    }
     """
 
-    user_message_count = var(0)
-
     def compose(self) -> ComposeResult:
-        yield Header(name="HackIllinois name", show_clock=False)
+        yield Header(name="📖 Alexandria – Your CLI Companion", show_clock=False)
         with Vertical(id="chat-container"):
-            # Enable bracket markup by setting highlight=True
             self.chat_log = Log(highlight=True)
             yield self.chat_log
+
+            # Input row
             with Horizontal(id="input-container"):
-                self.input_box = Input(placeholder="Type your message here...")
+                self.input_box = Input(placeholder="Write your query...")
                 yield self.input_box
                 yield Button("Send", id="send_button")
                 yield Button("Exit", id="exit_button")
+                # Spinner container
+                with Horizontal(id="spinner-container"):
+                    self.spinner = SpinningCircle()
+                    yield self.spinner
+
         yield Footer()
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
         if event.button.id == "send_button":
             self.send_user_message()
         elif event.button.id == "exit_button":
-            self.exit()
+            self.app.exit()
 
     def on_input_submitted(self, event: Input.Submitted) -> None:
         self.send_user_message()
 
     def send_user_message(self) -> None:
-        """
-        Displays the user's message in the chat log, then fetches a response from Ollama.
-        """
+        # Show the spinner
+        self.spinner.visible = True
         message = self.input_box.value.strip()
         if not message:
+            # No message, hide spinner again
+            self.spinner.visible = False
             return
-
-        # Bracket markup for bold label
-        self.chat_log.write(f"User: {message}\n")  
+        self.chat_log.write(f"User: {message}\n")
         self.input_box.value = ""
 
-        # Get the response from Ollama
+        # Fetch the assistant response
         response = self.fetch_ollama_response(message)
-        self.chat_log.write(f"Assistant: {response}\n")  
 
+        # Hide spinner once we have the response
+        self.spinner.visible = False
+
+        self.chat_log.write(f"Assistant:{response}\n")
 
     def fetch_ollama_response(self, user_message: str) -> str:
-        return get_ai_response(user_message)
         try:
-            print(f"Sending request to Ollama: {user_message}")  # Debugging
-
-            resp = requests.post(
-                "http://localhost:11434/api/generate",
-                json={"model": "llama3.2", "prompt": user_message, "stream": False}
-            )
-
-            print(f"Response status code: {resp.status_code}")  # Debugging
-            print(f"Response text: {resp.text}")  # Debugging
-
-            if resp.status_code != 200:
-                return f"Error: Received status code {resp.status_code}"
-
-            data = resp.json()
-            return data.get("response", "No response key found in JSON.")
+            payload = {
+                "model": "llama2",  # Adjust to your installed model
+                "prompt": user_message,
+                "stream": False
+            }
+            r = requests.post("http://127.0.0.1:11434/api/generate", json=payload)
+            data = r.json()
+            return data.get("response", "No response from Ollama.")
         except Exception as e:
-            return f"Error calling Ollama: {str(e)}"
+            return f"Error calling Ollama: {e}"
 
+# ─────────────────────────────────────────────────────────────────────────────
+# Main App
+# ─────────────────────────────────────────────────────────────────────────────
+
+class Alexandria(App):
+    """
+    Main Textual App that only shows the main chat UI,
+    but includes a spinner for requests.
+    """
+    def on_mount(self) -> None:
+        # Instead of a loading screen, we directly push the chat UI
+        self.push_screen(MainChatScreen())
+
+    def compose(self) -> ComposeResult:
+        # Fallback compose if no screen is active
+        yield Header(name="📖 Alexandria – Your CLI Companion", show_clock=False)
+        # We won't define the spinner here; it's in the MainChatScreen
+        yield Footer()
 
 def main():
     cli()
 
 if __name__ == "__main__":
-    main() 
+    main()
