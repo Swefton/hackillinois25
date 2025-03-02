@@ -139,5 +139,5 @@ def scrape_full_documentation(start_url):
 
 # Example usage:
 if __name__ == "__main__":
-    start_url = "https://docs.pycord.dev/en/stable/api/index.html"
+    start_url = "https://docs.pycord.dev/en/stable/"
     sections, tree = scrape_full_documentation(start_url)
