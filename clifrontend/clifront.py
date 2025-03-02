@@ -3,6 +3,7 @@
 import os
 import click
 import requests
+
 from rich import print as rprint
 from rich.panel import Panel
 from rich import box
@@ -17,6 +18,7 @@ session_style = Style.from_dict({
 })
 session = PromptSession(style=session_style)
 
+
 @click.group()
 def cli():
     """
@@ -28,9 +30,7 @@ def cli():
 
 @cli.command()
 def activate():
-    """
-    Prompts for a directory path and scrapes all files in that directory.
-    """
+    """Scrape files in a given directory."""
     click.echo("Welcome! Please give path to project (ex: desktop/p1)")
     project_path = input(">> ").strip()
 
@@ -53,6 +53,14 @@ def activate():
 
 @cli.command()
 def chat():
+    """Launch Alexandria – Your CLI Companion."""
+    Alexandria().run()
+
+# ─────────────────────────────────────────────────────────────────────────────
+# A simple spinning circle widget
+# ─────────────────────────────────────────────────────────────────────────────
+
+class SpinningCircle(Static):
     """
     Launch a barebone chat interface.
     """

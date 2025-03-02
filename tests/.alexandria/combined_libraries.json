@@ -1,0 +1,23 @@
+{
+    "python": [
+        {
+            "library": "os",
+            "doc_link": "Documentation not found for 'os'."
+        },
+        {
+            "library": "pycord",
+            "doc_link": "Documentation not found for 'pycord'."
+        },
+        {
+            "library": "spotipy",
+            "doc_link": "https://spotipy.readthedocs.org/"
+        }
+    ],
+    "node": [],
+    "ruby": [],
+    "php": [],
+    "maven": [],
+    "nuget": [],
+    "go": [],
+    "rust": []
+}
