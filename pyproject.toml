@@ -1,0 +1,22 @@
+[build-system]
+requires = ["setuptools", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "alexandria"
+version = "0.1.0"
+description = "A command-line tool for HackIllinois"
+authors = [{ name = "Your Name", email = "your.email@example.com" }]
+readme = "README.md"
+dependencies = [
+    "click",
+    "textual",
+    "requests",
+    "sentence-transformers",
+    "rank-bm25",
+    "faiss-cpu",
+    "ollama"
+]
+
+[project.scripts]
+alexandria = "alexandria.cli:cli"

@@ -1,3 +1,4 @@
+import os
 import requests
 from bs4 import BeautifulSoup
 import json
@@ -110,7 +111,7 @@ def scrape_webpage(url):
     
     return sections
 
-def scrape_full_documentation(start_url):
+def scrape_full_documentation(start_url, library_name, directory):
     """Crawl all relevant documentation pages, build a tree view, and save structured data."""
     all_links, tree = fetch_all_links(start_url)
     print(f"Total unique documentation pages found: {len(all_links)}")
@@ -124,17 +125,26 @@ def scrape_full_documentation(start_url):
             if sections:
                 all_sections.extend(sections)
         except Exception as e:
-            print(f"❌ Failed to scrape {url}: {e}")
+            pass 
     
-    # Save structured documentation data.
-    with open("structured_docs.json", "w", encoding="utf-8") as file:
+    # Define the target folder where JSON files will be stored
+    target_folder = os.path.join(directory, library_name)
+    
+    # Ensure the directory exists
+    os.makedirs(target_folder, exist_ok=True)
+
+    # Save structured documentation data
+    structured_docs_path = os.path.join(target_folder, "structured_docs.json")
+    with open(structured_docs_path, "w", encoding="utf-8") as file:
         json.dump(all_sections, file, indent=4, ensure_ascii=False)
     
-    # Save the tree view for later analysis or visualization.
-    with open("doc_tree.json", "w", encoding="utf-8") as file:
+    # Save the tree view for later analysis or visualization
+    doc_tree_path = os.path.join(target_folder, "doc_tree.json")
+    with open(doc_tree_path, "w", encoding="utf-8") as file:
         json.dump(tree, file, indent=4, ensure_ascii=False)
     
-    print("✅ Scraping complete! Data saved to 'structured_docs.json' and 'doc_tree.json'.")
+    print(f"✅ Scraping complete! Data saved to:\n  📁 {structured_docs_path}\n  📁 {doc_tree_path}")
+    
     return all_sections, tree
 
 # Example usage:

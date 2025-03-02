@@ -1,0 +1,7 @@
+click
+textual
+requests
+sentence-transformers
+rank-bm25
+faiss-cpu
+ollama
