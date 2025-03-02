@@ -16,7 +16,7 @@ def get_pypi_doc_url(library_name):
     response = requests.get(url)
     if response.status_code == 200:
         info = response.json().get('info', {})
-        urls = info.get('project_urls', {})
+        urls = info.get('project_urls') or {}  # Default to empty dict if None
         # Check common documentation keys
         for key in ['Documentation', 'Docs', 'documentation']:
             if key in urls and urls[key]:
@@ -35,7 +35,7 @@ def get_python_doc_url(library_name):
         return get_builtin_doc_url(library_name)
     else:
         doc_url = get_pypi_doc_url(library_name)
-        return doc_url if doc_url else f"Documentation not found for '{library_name}'."
+        return doc_url if doc_url else None
 
 # =============================
 # Node.js (npm) Ecosystem Functions
@@ -166,31 +166,31 @@ def main():
     ecosystem = input("Enter ecosystem: ").strip().lower()
     library_name = input("Enter the library name (or coordinates for maven, e.g. groupId:artifactId): ").strip()
 
+    doc_url = None
     if ecosystem == 'python':
-        print("Documentation URL:", get_python_doc_url(library_name))
+        doc_url = get_python_doc_url(library_name)
     elif ecosystem == 'node':
         doc_url = get_npm_doc_url(library_name)
-        print("Documentation URL:", doc_url if doc_url else f"Documentation not found for '{library_name}'.")
     elif ecosystem == 'ruby':
         doc_url = get_rubygems_doc_url(library_name)
-        print("Documentation URL:", doc_url if doc_url else f"Documentation not found for '{library_name}'.")
     elif ecosystem == 'php':
         doc_url = get_packagist_doc_url(library_name)
-        print("Documentation URL:", doc_url if doc_url else f"Documentation not found for '{library_name}'.")
     elif ecosystem == 'maven':
         doc_url = get_maven_doc_url(library_name)
-        print("Documentation URL:", doc_url if doc_url else f"Documentation not found for '{library_name}'.")
     elif ecosystem == 'nuget':
         doc_url = get_nuget_doc_url(library_name)
-        print("Documentation URL:", doc_url if doc_url else f"Documentation not found for '{library_name}'.")
     elif ecosystem == 'go':
-        print("Documentation URL:", get_go_doc_url(library_name))
+        doc_url = get_go_doc_url(library_name)
     elif ecosystem == 'rust':
         doc_url = get_rust_doc_url(library_name)
-        print("Documentation URL:", doc_url if doc_url else f"Documentation not found for '{library_name}'.")
     else:
         print("Ecosystem not supported.")
+        return
+
+    if doc_url:
+        print("Documentation URL:", doc_url)
+    else:
+        print(f"Documentation not found for '{library_name}' in the {ecosystem} ecosystem.")
 
 if __name__ == "__main__":
     main()
-
