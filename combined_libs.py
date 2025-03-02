@@ -1,7 +1,6 @@
-# combined_libs.py
-
 import os
 import csv
+import json
 
 # Import the scanning functions from find_libs.py
 from find_libs import (
@@ -27,7 +26,6 @@ from libraryfetcher import (
     get_rust_doc_url
 )
 
-
 def load_common_libraries_csv(language):
     """
     Loads a CSV of the form 'common_libraries/<language>_common_libraries.csv'
@@ -51,26 +49,8 @@ def load_common_libraries_csv(language):
 
     return common_map
 
-
-def write_library_links_csv(language, entries):
-    """
-    Writes the list of (library, doc_link) tuples to
-    library_links/<language>_libraries.csv with no header row.
-    """
-    os.makedirs("library_links", exist_ok=True)
-    out_file = f"library_links/{language}_libraries.csv"
-    try:
-        with open(out_file, "w", encoding="utf-8", newline="") as f:
-            writer = csv.writer(f)
-            # Write each (lib, doc) pair
-            for lib_name, doc_link in entries:
-                writer.writerow([lib_name, doc_link])
-    except Exception as e:
-        print(f"Error writing {out_file}: {e}")
-
-
 def main():
-    # 1) Collect libraries from find_libs.py
+    # 1) Map each language to its scanning function
     language_find_functions = {
         "python": find_python_libraries,
         "node": find_node_libraries,
@@ -82,7 +62,7 @@ def main():
         "rust": find_rust_libraries
     }
 
-    # 2) Map each language to the libraryfetcher function we should use if it's not in the CSV
+    # 2) Map each language to the library-fetching function (doc URL lookup)
     language_fetcher_functions = {
         "python": get_python_doc_url,   # uses built-in or PyPI
         "node": get_npm_doc_url,
@@ -94,33 +74,66 @@ def main():
         "rust": get_rust_doc_url
     }
 
-    # 3) For each language, gather libraries and find doc links
+    # 3) Minimal fallback mappings for ambiguous short inputs.
+    # (This is minimal—only for very common cases.)
+    fallback_maps = {
+        "python": {
+            "opencv": "opencv-python",
+            "opencv-python": "opencv-python",
+            "pd": "pandas",
+            "bs4": "beautifulsoup"
+        },
+        # You can define fallback maps for other ecosystems if needed.
+    }
+
+    combined_results = {}
+
+    # 4) Process each language
     for lang, finder_func in language_find_functions.items():
-        libs = finder_func(".")  # Scan current directory; adjust as needed
-        if not libs:
-            # Skip writing output if no libraries are found
-            continue
-
-        # Load existing "common" library docs from CSV (may be empty if not found)
+        print(f"Scanning for {lang} libraries...")
+        libs = finder_func(".")  # Adjust the scanning directory as needed
+        if libs is None:
+            libs = set()
+        else:
+            libs = set(libs)
+        print(f"Found {len(libs)} libraries for {lang}.")
+        
+        # Load existing common library docs from CSV (if available)
         common_map = load_common_libraries_csv(lang)
-
         results = []
-        fetcher_func = language_fetcher_functions[lang]
+        fetcher_func = language_fetcher_functions.get(lang)
 
-        for lib in libs:
+        for lib in sorted(libs):
+            # If a common documentation link exists, use it.
             if lib in common_map:
-                # Found in CSV
                 doc_link = common_map[lib]
             else:
-                # Not in CSV; use libraryfetcher
-                doc_link = fetcher_func(lib)
+                # If there is a fallback mapping for this language, check if we should remap.
+                if lang in fallback_maps and lib.lower() in fallback_maps[lang]:
+                    original = lib
+                    lib = fallback_maps[lang][lib.lower()]
+                    print(f"[{lang}] Mapping ambiguous '{original}' to '{lib}'.")
+                # Use the fetcher function for this language.
+                if fetcher_func:
+                    doc_link = fetcher_func(lib)
+                else:
+                    doc_link = f"Fetcher not implemented for '{lib}'."
                 if not doc_link:
                     doc_link = f"Documentation not found for '{lib}'."
-            results.append((lib, doc_link))
+            results.append({"library": lib, "doc_link": doc_link})
 
-        # Write out each language's results to library_links/<language>_libraries.csv
-        write_library_links_csv(lang, results)
+        # Store results even if empty.
+        combined_results[lang] = results
 
+    # 5) Write the combined results to one JSON file.
+    os.makedirs("library_links", exist_ok=True)
+    out_file = "library_links/combined_libraries.json"
+    try:
+        with open(out_file, "w", encoding="utf-8") as f:
+            json.dump(combined_results, f, indent=4)
+        print(f"Combined libraries written to {out_file}")
+    except Exception as e:
+        print(f"Error writing {out_file}: {e}")
 
 if __name__ == "__main__":
     main()

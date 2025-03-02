@@ -52,7 +52,41 @@ def get_python_doc_url(library_name):
     else:
         return get_pypi_doc_url(library_name)
 
-# Use BeautifulSoup to scrape PyPI search results for package names.
+# =============================
+# Stub Functions for Other Ecosystems
+# =============================
+def get_npm_doc_url(library_name):
+    # Minimal stub for Node (npm) ecosystem.
+    # You can implement proper fetching logic later.
+    return f"Documentation lookup for '{library_name}' on npm is not implemented."
+
+def get_rubygems_doc_url(library_name):
+    # Minimal stub for Ruby ecosystem.
+    return f"Documentation lookup for '{library_name}' on RubyGems is not implemented."
+
+def get_packagist_doc_url(library_name):
+    # Minimal stub for PHP (Packagist) ecosystem.
+    return f"Documentation lookup for '{library_name}' on Packagist is not implemented."
+
+def get_maven_doc_url(library_name):
+    # Minimal stub for Maven ecosystem.
+    return f"Documentation lookup for '{library_name}' on Maven Central is not implemented."
+
+def get_nuget_doc_url(library_name):
+    # Minimal stub for NuGet (.NET) ecosystem.
+    return f"Documentation lookup for '{library_name}' on NuGet is not implemented."
+
+def get_go_doc_url(library_name):
+    # Minimal stub for Go ecosystem.
+    return f"Documentation lookup for '{library_name}' on pkg.go.dev is not implemented."
+
+def get_rust_doc_url(library_name):
+    # Minimal stub for Rust ecosystem.
+    return f"Documentation lookup for '{library_name}' on crates.io is not implemented."
+
+# =============================
+# Use BeautifulSoup to Scrape PyPI Search Results for Package Names
+# =============================
 def scrape_pypi_search(user_input):
     search_url = f"https://pypi.org/search/?q={user_input}"
     response = requests.get(search_url)
@@ -67,8 +101,9 @@ def scrape_pypi_search(user_input):
             package_names.append(name_tag.text.strip())
     return package_names
 
-# Combine candidate pool from popular packages and scraped packages,
-# then use multiple fuzzy scorers with a dynamic cutoff.
+# =============================
+# Fuzzy Matching to Find the Best Package Name
+# =============================
 def search_best_pypi_match(user_input):
     # Use a lower cutoff for very short inputs.
     cutoff = 20 if len(user_input) < 5 else 40
@@ -85,7 +120,7 @@ def search_best_pypi_match(user_input):
         if user_input.lower() in pkg.lower():
             return pkg
 
-    # Try several scorers.
+    # Try several fuzzy scorers.
     scorers = [fuzz.partial_ratio, fuzz.token_set_ratio, fuzz.ratio]
     best_match = None
     best_score = 0
@@ -104,7 +139,7 @@ def search_best_pypi_match(user_input):
     return best_match
 
 # =============================
-# Main Program
+# Main Program (for testing libraryfetcher.py directly)
 # =============================
 def main():
     print("Supported ecosystems: python, node, ruby, php, maven, nuget, go, rust")
@@ -138,8 +173,22 @@ def main():
         if not doc_url and library_name.lower() in fallback_map:
             library_name = fallback_map[library_name.lower()]
             doc_url = get_python_doc_url(library_name)
+    elif ecosystem == 'node':
+        doc_url = get_npm_doc_url(library_name)
+    elif ecosystem == 'ruby':
+        doc_url = get_rubygems_doc_url(library_name)
+    elif ecosystem == 'php':
+        doc_url = get_packagist_doc_url(library_name)
+    elif ecosystem == 'maven':
+        doc_url = get_maven_doc_url(library_name)
+    elif ecosystem == 'nuget':
+        doc_url = get_nuget_doc_url(library_name)
+    elif ecosystem == 'go':
+        doc_url = get_go_doc_url(library_name)
+    elif ecosystem == 'rust':
+        doc_url = get_rust_doc_url(library_name)
     else:
-        print("Ecosystem not supported in this example.")
+        print("Ecosystem not supported.")
         return
 
     if doc_url:
