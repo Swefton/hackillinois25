@@ -34,6 +34,7 @@ def load_common_libraries_csv(language):
     """
     filename = f"common_libraries/{language}_common_libraries.csv"
     if not os.path.exists(filename):
+        print("NOT FOUND IN COMMON LIBRARIES")
         return {}
 
     common_map = {}
